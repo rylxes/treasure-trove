@@ -61,15 +61,23 @@ src/
     AddToCollection.tsx
     AIRecommendations.tsx
     Collections.tsx
+    EnhancedSavedSearches.tsx
     FollowSellerButton.tsx
     Footer.tsx
     Navbar.tsx
+    PriceAlertButton.tsx
+    PriceHistory.tsx
     RecentlyViewedItems.tsx
     SavedSearches.tsx
     SearchHighlight.tsx
     SearchResultItem.tsx
     ShareListing.tsx
     SimilarItems.tsx
+    StockAlertButton.tsx
+    StockStatus.tsx
+    UpdateStockStatus.tsx
+    WishListButton.tsx
+    WishlistCount.tsx
   contexts/
     AuthContext.tsx
   hooks/
@@ -88,13 +96,19 @@ src/
     ItemDetails.tsx
     Messages.tsx
     Notifications.tsx
+    PriceAlerts.tsx
     Profile.tsx
+    SavedSearchAlerts.tsx
     Settings.tsx
+    StockAlerts.tsx
+    Wishlist.tsx
   App.tsx
   index.css
   main.tsx
   vite-env.d.ts
 supabase/
+  functions/
+    scheduled-tasks.ts
   migrations/
     20250225220246_foggy_sun.sql
     20250225221149_precious_plain.sql
@@ -123,6 +137,14 @@ supabase/
     20250302141125_add_category_management.sql
     20250302153606_fix_admin_manage_category_ambiguity.sql
     20250302154350_add_updated_at_to_categories.sql
+    20250302160147_add_wish_list_items.sql
+    20250302160432_add_price_history.sql
+    20250302160910_add_Back-in-Stock.sql
+    20250302161629_add_saved_searches.sql
+    20250302163455_get_saved_searches_with_alerts.sql
+    20250302164205_get_saved_search_matches.sql
+    20250302164428_get_saved_search_matches.sql
+    20250302164909_get_saved_search_matches.sql
   .gitignore
   config.toml
 .gitignore
@@ -131,6 +153,7 @@ eslint.config.js
 index.html
 package.json
 postcss.config.js
+README-New-Features.md
 README.md
 tailwind.config.js
 tsconfig.app.json
@@ -1034,6 +1057,299 @@ export function Collections() {
 }
 
 ================
+File: src/components/EnhancedSavedSearches.tsx
+================
+// src/components/EnhancedSavedSearches.tsx
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Search, Bell, Trash2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+
+export function EnhancedSavedSearches() {
+    const { user } = useAuth();
+    const [searches, setSearches] = useState<any[]>([]);
+    const [newSearch, setNewSearch] = useState({
+        name: '',
+        query: '',
+        notifyEmail: false,
+        notifyPush: false,
+        alertEnabled: false
+    });
+    const [currentSearch, setCurrentSearch] = useState<string>('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [showSuggestion, setShowSuggestion] = useState(false);
+
+    useEffect(() => {
+        if (user) fetchSearches();
+    }, [user]);
+
+    useEffect(() => {
+        // Get current search from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('query') || '';
+        const category = urlParams.get('category') || '';
+        const minPrice = urlParams.get('minPrice') || '';
+        const maxPrice = urlParams.get('maxPrice') || '';
+        const condition = urlParams.get('condition') || '';
+
+        // Build a search string representation
+        let searchDescription = [];
+        if (query) searchDescription.push(`"${query}"`);
+        if (category) searchDescription.push(`in ${category}`);
+        if (minPrice && maxPrice) {
+            searchDescription.push(`$${minPrice}-$${maxPrice}`);
+        } else if (minPrice) {
+            searchDescription.push(`min $${minPrice}`);
+        } else if (maxPrice) {
+            searchDescription.push(`max $${maxPrice}`);
+        }
+        if (condition) searchDescription.push(condition.replace('_', ' '));
+
+        // Set the current search if any filters are applied
+        const currentSearchStr = searchDescription.join(', ');
+        if (currentSearchStr) {
+            setCurrentSearch(currentSearchStr);
+
+            // Show save suggestion if this looks like a new search
+            const searchExists = searches.some(s => s.query === query &&
+                s.filters?.category === category &&
+                s.filters?.minPrice === minPrice &&
+                s.filters?.maxPrice === maxPrice &&
+                s.filters?.condition === condition);
+
+            setShowSuggestion(!searchExists && (query || category || minPrice || maxPrice || condition));
+
+            // Pre-populate the new search form
+            if (!searchExists) {
+                setNewSearch({
+                    name: query ? `Search for ${query}` : `${category || 'All items'} search`,
+                    query: query,
+                    notifyEmail: false,
+                    notifyPush: false,
+                    alertEnabled: false
+                });
+            }
+        } else {
+            setShowSuggestion(false);
+        }
+    }, [window.location.search, searches]);
+
+    async function fetchSearches() {
+        try {
+            const { data, error } = await supabase.rpc('get_saved_searches_with_alerts');
+            if (error) throw error;
+            setSearches(data || []);
+        } catch (error) {
+            console.error('Error fetching saved searches:', error);
+        }
+    }
+
+    async function handleSaveSearch() {
+        if (!user) return;
+        setLoading(true);
+        setError('');
+
+        try {
+            // Get current search filters from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('query') || '';
+            const category = urlParams.get('category') || '';
+            const minPrice = urlParams.get('minPrice') || '';
+            const maxPrice = urlParams.get('maxPrice') || '';
+            const condition = urlParams.get('condition') || '';
+
+            // Create filters object
+            const filters = {
+                category: category,
+                minPrice: minPrice,
+                maxPrice: maxPrice,
+                condition: condition
+            };
+
+            // Save the search
+            const { error } = await supabase
+                .from('saved_searches')
+                .insert({
+                    user_id: user.id,
+                    name: newSearch.name,
+                    query: query,
+                    filters: filters,
+                    notify_email: newSearch.notifyEmail,
+                    notify_push: newSearch.notifyPush,
+                    alert_enabled: newSearch.alertEnabled,
+                    alert_frequency: 'daily'
+                });
+
+            if (error) throw error;
+
+            // Reset form and refresh searches
+            setNewSearch({
+                name: '',
+                query: '',
+                notifyEmail: false,
+                notifyPush: false,
+                alertEnabled: false
+            });
+            setShowSuggestion(false);
+            fetchSearches();
+        } catch (error) {
+            console.error('Error saving search:', error);
+            setError('Failed to save search. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleDeleteSearch(id: string) {
+        try {
+            const { error } = await supabase
+                .from('saved_searches')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            fetchSearches();
+        } catch (error) {
+            console.error('Error deleting search:', error);
+        }
+    }
+
+    if (!user) return null;
+
+    return (
+        <div className="space-y-6">
+            {/* Current Search Save Suggestion */}
+            {showSuggestion && (
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle size={20} className="text-indigo-600" />
+                            <h3 className="font-semibold">Save Your Current Search</h3>
+                        </div>
+                    </div>
+
+                    <p className="text-gray-600 mb-3">
+                        Save <span className="font-medium">{currentSearch}</span> to easily run it again or get alerts about new matching items.
+                    </p>
+
+                    <div className="space-y-3">
+                        <input
+                            type="text"
+                            placeholder="Search name"
+                            value={newSearch.name}
+                            onChange={e => setNewSearch({...newSearch, name: e.target.value})}
+                            className="w-full p-2 border rounded-lg"
+                        />
+
+                        <div className="flex flex-wrap gap-3">
+                            <label className="flex items-center gap-1">
+                                <input
+                                    type="checkbox"
+                                    checked={newSearch.alertEnabled}
+                                    onChange={e => setNewSearch({...newSearch, alertEnabled: e.target.checked})}
+                                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <span className="text-sm text-gray-700">Enable alerts for new items</span>
+                            </label>
+
+                            {newSearch.alertEnabled && (
+                                <>
+                                    <label className="flex items-center gap-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={newSearch.notifyEmail}
+                                            onChange={e => setNewSearch({...newSearch, notifyEmail: e.target.checked})}
+                                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm text-gray-700">Email</span>
+                                    </label>
+                                    <label className="flex items-center gap-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={newSearch.notifyPush}
+                                            onChange={e => setNewSearch({...newSearch, notifyPush: e.target.checked})}
+                                            className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm text-gray-700">Push</span>
+                                    </label>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="text-red-600 text-sm mt-2">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex gap-2 mt-3">
+                        <button
+                            onClick={() => setShowSuggestion(false)}
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSaveSearch}
+                            disabled={loading || !newSearch.name}
+                            className="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            {loading ? 'Saving...' : 'Save Search'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Saved Searches List */}
+            {searches.length > 0 && (
+                <div className="bg-white p-4 rounded-lg shadow">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold">Your Saved Searches</h3>
+                        <Link
+                            to="/saved-search-alerts"
+                            className="text-indigo-600 text-sm hover:text-indigo-700"
+                        >
+                            View All ({searches.length})
+                        </Link>
+                    </div>
+
+                    <div className="divide-y">
+                        {searches.slice(0, 3).map((search) => (
+                            <div key={search.id} className="py-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Search size={16} className="text-indigo-600" />
+                                    <span>{search.name}</span>
+                                    {search.alert_enabled && (
+                                        <Bell size={12} className="text-indigo-600" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Link
+                                        to={`/browse?query=${encodeURIComponent(search.query || '')}`}
+                                        className="text-indigo-600 hover:text-indigo-700"
+                                    >
+                                        Run
+                                    </Link>
+                                    <button
+                                        onClick={() => handleDeleteSearch(search.id)}
+                                        className="text-red-600 hover:text-red-800"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+================
 File: src/components/FollowSellerButton.tsx
 ================
 // src/components/FollowSellerButton.tsx
@@ -1181,148 +1497,673 @@ export function Footer() {
 ================
 File: src/components/Navbar.tsx
 ================
+// src/components/Navbar.tsx with wishlist integration
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
-import { Bell, MessageSquare, PlusCircle, User, Settings, Shield } from 'lucide-react';
+import {Link} from 'react-router-dom';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
+import {
+    Bell,
+    BellRing,
+    MessageSquare,
+    PlusCircle,
+    Search,
+    Settings,
+    Shield,
+    User
+} from 'lucide-react';
+import {WishlistCount} from './WishlistCount'; // Import the new component
 
 export function Navbar() {
-  const { user, signOut } = useAuth();
-  const [isAdmin, setIsAdmin] = React.useState(false);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+    const {user, signOut} = useAuth();
+    const [isAdmin, setIsAdmin] = React.useState(false);
+    const [showDropdown, setShowDropdown] = React.useState(false);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+    React.useEffect(() => {
+        if (user) {
+            checkAdminStatus();
+        } else {
+            setIsAdmin(false);
+        }
+    }, [user]);
+
+    React.useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    async function checkAdminStatus() {
+        try {
+            const {data: profile, error} = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user!.id)
+                .single();
+
+            if (error) throw error;
+            setIsAdmin(profile?.role === 'admin' || profile?.role === 'super_admin');
+        } catch (error) {
+            console.error('Error checking admin status:', error);
+            setIsAdmin(false);
+        }
+    }
+
+    return (
+        <nav className="bg-white shadow-lg">
+            <div className="container mx-auto px-4">
+                <div className="flex justify-between items-center h-16">
+                    <Link to="/" className="flex items-center space-x-2">
+                        <span className="text-2xl font-bold text-indigo-600">Treasure Trove</span>
+                    </Link>
+
+                    <div className="flex items-center space-x-4">
+                        <Link to="/browse" className="text-gray-700 hover:text-indigo-600">
+                            Browse
+                        </Link>
+
+                        {user ? (
+                            <>
+                                <Link
+                                    to="/create-listing"
+                                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-1"
+                                >
+                                    <PlusCircle size={18}/>
+                                    <span>Sell Item</span>
+                                </Link>
+
+                                <Link to="/notifications"
+                                      className="text-gray-700 hover:text-indigo-600">
+                                    <Bell size={20}/>
+                                </Link>
+
+                                <Link to="/messages"
+                                      className="text-gray-700 hover:text-indigo-600">
+                                    <MessageSquare size={20}/>
+                                </Link>
+
+                                {/* Add Wishlist Icon with Count */}
+                                <WishlistCount/>
+
+                                <div className="relative" ref={dropdownRef}>
+                                    <button
+                                        onClick={() => setShowDropdown(!showDropdown)}
+                                        className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 focus:outline-none"
+                                    >
+                                        <User size={20}/>
+                                    </button>
+
+                                    {showDropdown && (
+                                        <div
+                                            className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-lg shadow-xl z-50">
+                                            <Link
+                                                to={`/profile/${user.id}`}
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                Profile
+                                            </Link>
+                                            <Link
+                                                to="/wishlist"
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                My Wishlist
+                                            </Link>
+                                            <Link
+                                                to="/price-alerts"
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <BellRing size={16}/>
+                                                    Price Alerts
+                                                </div>
+                                            </Link>
+                                            <Link
+                                                to="/stock-alerts"
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Bell size={16}/>
+                                                    Back in Stock Alerts
+                                                </div>
+                                            </Link>
+                                            <Link
+                                                to="/saved-search-alerts"
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Search size={16}/>
+                                                    Saved Searches
+                                                </div>
+                                            </Link>
+                                            <Link
+                                                to="/settings"
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Settings size={16}/>
+                                                    Settings
+                                                </div>
+                                            </Link>
+                                            {isAdmin && (
+                                                <Link
+                                                    to="/admin"
+                                                    onClick={() => setShowDropdown(false)}
+                                                    className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <Shield size={16}/>
+                                                        Admin Panel
+                                                    </div>
+                                                </Link>
+                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    signOut();
+                                                    setShowDropdown(false);
+                                                }}
+                                                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <Link
+                                to="/auth"
+                                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                            >
+                                Sign In
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    );
+}
+
+================
+File: src/components/PriceAlertButton.tsx
+================
+// src/components/PriceAlertButton.tsx
+import React, { useState, useEffect } from 'react';
+import { BellRing, AlertTriangle, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+
+interface PriceAlertButtonProps {
+  itemId: string;
+  price: number;
+  size?: number;
+  showText?: boolean;
+  className?: string;
+}
+
+export function PriceAlertButton({
+  itemId,
+  price,
+  size = 20,
+  showText = true,
+  className = ''
+}: PriceAlertButtonProps) {
+  const { user } = useAuth();
+  const [hasAlert, setHasAlert] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [targetPrice, setTargetPrice] = useState('');
+  const [notifyEmail, setNotifyEmail] = useState(true);
+  const [notifyPush, setNotifyPush] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
     if (user) {
-      checkAdminStatus();
-    } else {
-      setIsAdmin(false);
+      checkAlertStatus();
     }
-  }, [user]);
+  }, [user, itemId]);
 
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  async function checkAdminStatus() {
+  async function checkAlertStatus() {
     try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user!.id)
-        .single();
+      const { data, error } = await supabase
+        .rpc('has_price_alert', { item_id: itemId });
 
       if (error) throw error;
-      setIsAdmin(profile?.role === 'admin' || profile?.role === 'super_admin');
+      setHasAlert(data || false);
     } catch (error) {
-      console.error('Error checking admin status:', error);
-      setIsAdmin(false);
+      console.error('Error checking price alert status:', error);
     }
   }
 
+  async function handleToggleAlert() {
+    if (!user) {
+      // Redirect to auth page if not logged in
+      window.location.href = '/auth';
+      return;
+    }
+
+    if (hasAlert) {
+      // If alert already exists, remove it
+      await removePriceAlert();
+    } else {
+      // Show modal to set alert preferences
+      setShowModal(true);
+      // Set default target price to 10% below current price
+      setTargetPrice((price * 0.9).toFixed(2));
+    }
+  }
+
+  async function removePriceAlert() {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('toggle_price_alert', { item_id: itemId });
+
+      if (error) throw error;
+      setHasAlert(false);
+    } catch (error) {
+      console.error('Error removing price alert:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function createPriceAlert() {
+    setLoading(true);
+    setError('');
+    try {
+      // Validate target price
+      const targetPriceNum = parseFloat(targetPrice);
+      if (isNaN(targetPriceNum) || targetPriceNum <= 0) {
+        setError('Please enter a valid target price');
+        setLoading(false);
+        return;
+      }
+
+      // Create alert
+      const { data, error } = await supabase
+        .rpc('toggle_price_alert', {
+          item_id: itemId,
+          target_price: targetPriceNum,
+          notify_email: notifyEmail,
+          notify_push: notifyPush
+        });
+
+      if (error) throw error;
+
+      setHasAlert(true);
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error creating price alert:', error);
+      setError('Failed to create price alert. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const buttonClasses = `${className} flex items-center gap-2 ${
+    hasAlert 
+      ? 'text-purple-600 hover:text-purple-500' 
+      : 'text-gray-600 hover:text-gray-500'
+  }`;
+
+  if (!user) {
+    return (
+      <button
+        onClick={() => window.location.href = '/auth'}
+        className={buttonClasses}
+        aria-label="Price Alert"
+      >
+        <BellRing size={size} />
+        {showText && <span>Price Alert</span>}
+      </button>
+    );
+  }
+
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-indigo-600">Treasure Trove</span>
-          </Link>
+    <>
+      <button
+        onClick={handleToggleAlert}
+        disabled={loading}
+        className={buttonClasses}
+        aria-label={hasAlert ? "Remove Price Alert" : "Set Price Alert"}
+      >
+        <BellRing size={size} fill={hasAlert ? 'currentColor' : 'none'} />
+        {showText && (
+          <span>{hasAlert ? 'Alert Set' : 'Price Alert'}</span>
+        )}
+      </button>
 
-          <div className="flex items-center space-x-4">
-            <Link to="/browse" className="text-gray-700 hover:text-indigo-600">
-              Browse
-            </Link>
-            
-            {user ? (
-              <>
-                <Link
-                  to="/create-listing"
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-1"
-                >
-                  <PlusCircle size={18} />
-                  <span>Sell Item</span>
-                </Link>
-
-                <Link to="/notifications" className="text-gray-700 hover:text-indigo-600">
-                  <Bell size={20} />
-                </Link>
-
-                <Link to="/messages" className="text-gray-700 hover:text-indigo-600">
-                  <MessageSquare size={20} />
-                </Link>
-
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 focus:outline-none"
-                  >
-                    <User size={20} />
-                  </button>
-                  
-                  {showDropdown && (
-                    <div className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-lg shadow-xl z-50">
-                      <Link
-                        to={`/profile/${user.id}`}
-                        onClick={() => setShowDropdown(false)}
-                        className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
-                      >
-                        Profile
-                      </Link>
-                      <Link
-                        to="/settings"
-                        onClick={() => setShowDropdown(false)}
-                        className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Settings size={16} />
-                          Settings
-                        </div>
-                      </Link>
-                      {isAdmin && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setShowDropdown(false)}
-                          className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Shield size={16} />
-                            Admin Panel
-                          </div>
-                        </Link>
-                      )}
-                      <button
-                        onClick={() => {
-                          signOut();
-                          setShowDropdown(false);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-indigo-50"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <Link
-                to="/auth"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+      {/* Price Alert Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Set Price Alert</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
               >
-                Sign In
-              </Link>
+                <X size={20} />
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 flex items-center gap-2">
+                <AlertTriangle size={18} />
+                <span>{error}</span>
+              </div>
             )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Price: ${price}
+                </label>
+                <div className="flex items-center gap-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Alert me when price is
+                  </label>
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      value={targetPrice}
+                      onChange={(e) => setTargetPrice(e.target.value)}
+                      className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      step="0.01"
+                      min="0.01"
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500">or less</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Notification Preferences
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.checked)}
+                      className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Email</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={notifyPush}
+                      onChange={(e) => setNotifyPush(e.target.checked)}
+                      className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Push notifications</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createPriceAlert}
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {loading ? 'Setting...' : 'Set Alert'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+      )}
+    </>
+  );
+}
+
+================
+File: src/components/PriceHistory.tsx
+================
+// src/components/PriceHistory.tsx
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ArrowDown, ArrowUp, TrendingDown } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { supabase } from '../lib/supabase';
+
+interface PriceHistoryProps {
+  itemId: string;
+  currentPrice: number;
+}
+
+interface PriceChange {
+  id: string;
+  old_price: number;
+  new_price: number;
+  changed_at: string;
+}
+
+interface ChartData {
+  date: string;
+  price: number;
+  formattedDate: string;
+}
+
+export function PriceHistory({ itemId, currentPrice }: PriceHistoryProps) {
+  const [priceHistory, setPriceHistory] = useState<PriceChange[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [showChart, setShowChart] = useState(false);
+  const [highestPrice, setHighestPrice] = useState(currentPrice);
+  const [lowestPrice, setLowestPrice] = useState(currentPrice);
+
+  useEffect(() => {
+    fetchPriceHistory();
+  }, [itemId]);
+
+  useEffect(() => {
+    if (priceHistory.length > 0) {
+      prepareChartData();
+    }
+  }, [priceHistory, currentPrice]);
+
+  async function fetchPriceHistory() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('price_history')
+        .select('*')
+        .eq('item_id', itemId)
+        .order('changed_at', { ascending: true });
+
+      if (error) throw error;
+      setPriceHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching price history:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function prepareChartData() {
+    // If there's price history data, prepare it for the chart
+    if (priceHistory.length > 0) {
+      // Start with the initial price (the "old_price" of the first change)
+      let chartPoints: ChartData[] = [
+        {
+          date: priceHistory[0].changed_at,
+          price: priceHistory[0].old_price,
+          formattedDate: format(parseISO(priceHistory[0].changed_at), 'MMM d, yyyy')
+        }
+      ];
+
+      // Add all the price change points
+      priceHistory.forEach(change => {
+        chartPoints.push({
+          date: change.changed_at,
+          price: change.new_price,
+          formattedDate: format(parseISO(change.changed_at), 'MMM d, yyyy')
+        });
+      });
+
+      // Add the current price as the last point if it's different from the last change
+      if (priceHistory.length > 0 && priceHistory[priceHistory.length - 1].new_price !== currentPrice) {
+        chartPoints.push({
+          date: new Date().toISOString(),
+          price: currentPrice,
+          formattedDate: 'Now'
+        });
+      }
+
+      // Find highest and lowest prices
+      const prices = chartPoints.map(point => point.price);
+      setHighestPrice(Math.max(...prices));
+      setLowestPrice(Math.min(...prices));
+
+      setChartData(chartPoints);
+    } else {
+      // If no price history, just show the current price
+      setChartData([
+        {
+          date: new Date().toISOString(),
+          price: currentPrice,
+          formattedDate: 'Now'
+        }
+      ]);
+    }
+  }
+
+  const priceChange = priceHistory.length > 0
+    ? currentPrice - priceHistory[0].old_price
+    : 0;
+
+  const percentChange = priceHistory.length > 0
+    ? ((currentPrice - priceHistory[0].old_price) / priceHistory[0].old_price) * 100
+    : 0;
+
+  return (
+    <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <TrendingDown size={18} />
+          Price History
+        </h3>
+        {priceHistory.length > 0 && (
+          <button
+            onClick={() => setShowChart(!showChart)}
+            className="text-indigo-600 text-sm hover:text-indigo-700"
+          >
+            {showChart ? 'Hide Chart' : 'Show Chart'}
+          </button>
+        )}
       </div>
-    </nav>
+
+      {priceHistory.length === 0 ? (
+        <div className="text-sm text-gray-500 mt-2">
+          No price changes recorded yet
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mt-2">
+            <div className="text-sm">
+              <div className="text-gray-500">Initial Price</div>
+              <div className="font-medium">${priceHistory[0].old_price.toFixed(2)}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-gray-500">Highest Price</div>
+              <div className="font-medium">${highestPrice.toFixed(2)}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-gray-500">Lowest Price</div>
+              <div className="font-medium">${lowestPrice.toFixed(2)}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-gray-500">Current Price</div>
+              <div className="font-medium">${currentPrice.toFixed(2)}</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mt-3">
+            <div className={`text-sm font-medium ${
+              priceChange < 0 ? 'text-green-600' : priceChange > 0 ? 'text-red-600' : 'text-gray-600'
+            }`}>
+              {priceChange < 0 ? (
+                <span className="flex items-center gap-1">
+                  <ArrowDown size={14} />
+                  ${Math.abs(priceChange).toFixed(2)} ({Math.abs(percentChange).toFixed(1)}%)
+                </span>
+              ) : priceChange > 0 ? (
+                <span className="flex items-center gap-1">
+                  <ArrowUp size={14} />
+                  ${priceChange.toFixed(2)} ({percentChange.toFixed(1)}%)
+                </span>
+              ) : (
+                <span>No change</span>
+              )}
+            </div>
+            <div className="text-xs text-gray-500">
+              since {format(parseISO(priceHistory[0].changed_at), 'MMM d, yyyy')}
+            </div>
+          </div>
+
+          {showChart && chartData.length > 1 && (
+            <div className="mt-4 h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(date) => format(parseISO(date), 'MM/dd')}
+                    scale="time"
+                    type="category"
+                  />
+                  <YAxis
+                    domain={[Math.floor(lowestPrice * 0.9), Math.ceil(highestPrice * 1.1)]}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip
+                    labelFormatter={(label) => {
+                      const point = chartData.find(data => data.date === label);
+                      return point ? point.formattedDate : '';
+                    }}
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="price"
+                    stroke="#6366F1"
+                    strokeWidth={2}
+                    activeDot={{ r: 8 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -1945,6 +2786,541 @@ export function SimilarItems({ itemId, title = "Similar Items" }: SimilarItemsPr
         </div>
       </div>
     </div>
+  );
+}
+
+================
+File: src/components/StockAlertButton.tsx
+================
+// src/components/StockAlertButton.tsx
+import React, { useState, useEffect } from 'react';
+import { Bell, AlertTriangle, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+
+interface StockAlertButtonProps {
+  itemId: string;
+  stockStatus: string;
+  size?: number;
+  showText?: boolean;
+  className?: string;
+}
+
+export function StockAlertButton({
+  itemId,
+  stockStatus,
+  size = 20,
+  showText = true,
+  className = ''
+}: StockAlertButtonProps) {
+  const { user } = useAuth();
+  const [hasAlert, setHasAlert] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState(true);
+  const [notifyPush, setNotifyPush] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      checkAlertStatus();
+    }
+  }, [user, itemId]);
+
+  async function checkAlertStatus() {
+    try {
+      const { data, error } = await supabase
+        .rpc('has_stock_alert', { item_id: itemId });
+
+      if (error) throw error;
+      setHasAlert(data || false);
+    } catch (error) {
+      console.error('Error checking stock alert status:', error);
+    }
+  }
+
+  async function handleToggleAlert() {
+    if (!user) {
+      // Redirect to auth page if not logged in
+      window.location.href = '/auth';
+      return;
+    }
+
+    if (hasAlert) {
+      // If alert already exists, remove it
+      await removeStockAlert();
+    } else {
+      // Show modal to set alert preferences
+      setShowModal(true);
+    }
+  }
+
+  async function removeStockAlert() {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('toggle_stock_alert', { item_id: itemId });
+
+      if (error) throw error;
+      setHasAlert(false);
+    } catch (error) {
+      console.error('Error removing stock alert:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function createStockAlert() {
+    setLoading(true);
+    setError('');
+    try {
+      // Create alert
+      const { data, error } = await supabase
+        .rpc('toggle_stock_alert', {
+          item_id: itemId,
+          notify_email: notifyEmail,
+          notify_push: notifyPush
+        });
+
+      if (error) throw error;
+
+      setHasAlert(true);
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error creating stock alert:', error);
+      setError('Failed to create stock alert. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Only show for out-of-stock items
+  if (stockStatus !== 'out_of_stock') {
+    return null;
+  }
+
+  const buttonClasses = `${className} flex items-center gap-2 ${
+    hasAlert 
+      ? 'text-orange-600 hover:text-orange-500' 
+      : 'text-gray-600 hover:text-gray-500'
+  }`;
+
+  if (!user) {
+    return (
+      <button
+        onClick={() => window.location.href = '/auth'}
+        className={buttonClasses}
+        aria-label="Notify Me When Available"
+      >
+        <Bell size={size} />
+        {showText && <span>Notify When Available</span>}
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleToggleAlert}
+        disabled={loading}
+        className={buttonClasses}
+        aria-label={hasAlert ? "Remove Stock Alert" : "Notify Me When Available"}
+      >
+        <Bell size={size} fill={hasAlert ? 'currentColor' : 'none'} />
+        {showText && (
+          <span>{hasAlert ? 'Alert Set' : 'Notify When Available'}</span>
+        )}
+      </button>
+
+      {/* Stock Alert Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Back in Stock Alert</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 flex items-center gap-2">
+                <AlertTriangle size={18} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                We'll notify you when this item is back in stock. Choose how you'd like to be notified:
+              </p>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.checked)}
+                      className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Email</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={notifyPush}
+                      onChange={(e) => setNotifyPush(e.target.checked)}
+                      className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">Push notifications</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createStockAlert}
+                  disabled={loading || (!notifyEmail && !notifyPush)}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                >
+                  {loading ? 'Setting...' : 'Set Alert'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+================
+File: src/components/StockStatus.tsx
+================
+// src/components/StockStatus.tsx
+import React from 'react';
+import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+
+interface StockStatusProps {
+  status: string;
+  className?: string;
+}
+
+export function StockStatus({ status, className = '' }: StockStatusProps) {
+  let statusDisplay = {
+    icon: <CheckCircle size={16} />,
+    text: 'In Stock',
+    color: 'text-green-600 bg-green-50',
+  };
+
+  if (status === 'low_stock') {
+    statusDisplay = {
+      icon: <AlertTriangle size={16} />,
+      text: 'Low Stock',
+      color: 'text-amber-600 bg-amber-50',
+    };
+  } else if (status === 'out_of_stock') {
+    statusDisplay = {
+      icon: <XCircle size={16} />,
+      text: 'Out of Stock',
+      color: 'text-red-600 bg-red-50',
+    };
+  }
+
+  return (
+    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm ${statusDisplay.color} ${className}`}>
+      {statusDisplay.icon}
+      <span>{statusDisplay.text}</span>
+    </div>
+  );
+}
+
+================
+File: src/components/UpdateStockStatus.tsx
+================
+// src/components/UpdateStockStatus.tsx
+import React, { useState } from 'react';
+import { Package, AlertTriangle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { StockStatus } from './StockStatus';
+
+interface UpdateStockStatusProps {
+  itemId: string;
+  currentStatus: string;
+  onUpdate?: (newStatus: string) => void;
+  isSeller: boolean;
+}
+
+export function UpdateStockStatus({
+  itemId,
+  currentStatus,
+  onUpdate,
+  isSeller
+}: UpdateStockStatusProps) {
+  const [status, setStatus] = useState(currentStatus);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // If not the seller, just show the status
+  if (!isSeller) {
+    return <StockStatus status={currentStatus} />;
+  }
+
+  async function handleUpdateStatus(newStatus: string) {
+    setLoading(true);
+    setError('');
+    try {
+      const { error } = await supabase
+        .rpc('update_item_stock_status', {
+          item_id: itemId,
+          new_stock_status: newStatus
+        });
+
+      if (error) throw error;
+
+      setStatus(newStatus);
+      if (onUpdate) onUpdate(newStatus);
+    } catch (error) {
+      console.error('Error updating stock status:', error);
+      setError('Failed to update stock status');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Package size={18} />
+        <span className="font-medium">Stock Status:</span>
+        <StockStatus status={status} />
+      </div>
+
+      {error && (
+        <div className="text-red-600 text-sm flex items-center gap-1">
+          <AlertTriangle size={14} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleUpdateStatus('in_stock')}
+          disabled={loading || status === 'in_stock'}
+          className={`px-3 py-1 text-sm rounded-full ${
+            status === 'in_stock' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          } disabled:opacity-50`}
+        >
+          In Stock
+        </button>
+        <button
+          onClick={() => handleUpdateStatus('low_stock')}
+          disabled={loading || status === 'low_stock'}
+          className={`px-3 py-1 text-sm rounded-full ${
+            status === 'low_stock' 
+              ? 'bg-amber-100 text-amber-800' 
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          } disabled:opacity-50`}
+        >
+          Low Stock
+        </button>
+        <button
+          onClick={() => handleUpdateStatus('out_of_stock')}
+          disabled={loading || status === 'out_of_stock'}
+          className={`px-3 py-1 text-sm rounded-full ${
+            status === 'out_of_stock' 
+              ? 'bg-red-100 text-red-800' 
+              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+          } disabled:opacity-50`}
+        >
+          Out of Stock
+        </button>
+      </div>
+    </div>
+  );
+}
+
+================
+File: src/components/WishListButton.tsx
+================
+// src/components/WishListButton.tsx
+import React, { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+
+interface WishListButtonProps {
+  itemId: string;
+  size?: number;
+  showText?: boolean;
+  className?: string;
+}
+
+export function WishListButton({
+  itemId,
+  size = 20,
+  showText = true,
+  className = ''
+}: WishListButtonProps) {
+  const { user } = useAuth();
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkWishlistStatus();
+    }
+  }, [user, itemId]);
+
+  async function checkWishlistStatus() {
+    try {
+      const { data, error } = await supabase
+        .rpc('is_in_wishlist', { item_id: itemId });
+
+      if (error) throw error;
+      setIsInWishlist(data || false);
+    } catch (error) {
+      console.error('Error checking wishlist status:', error);
+    }
+  }
+
+  async function handleToggleWishlist() {
+    if (!user) {
+      // Redirect to auth page if not logged in
+      window.location.href = '/auth';
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isInWishlist) {
+        const { error } = await supabase
+          .rpc('remove_from_wishlist', { item_id: itemId });
+
+        if (error) throw error;
+        setIsInWishlist(false);
+      } else {
+        const { error } = await supabase
+          .rpc('add_to_wishlist', { item_id: itemId });
+
+        if (error) throw error;
+        setIsInWishlist(true);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const buttonClasses = `${className} flex items-center gap-2 ${
+    isInWishlist 
+      ? 'text-red-600 hover:text-red-500' 
+      : 'text-gray-600 hover:text-gray-500'
+  }`;
+
+  if (!user) {
+    return (
+      <button
+        onClick={() => window.location.href = '/auth'}
+        className={buttonClasses}
+        aria-label="Save to Wishlist"
+      >
+        <Heart size={size} />
+        {showText && <span>Save</span>}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleToggleWishlist}
+      disabled={loading}
+      className={buttonClasses}
+      aria-label={isInWishlist ? "Remove from Wishlist" : "Save to Wishlist"}
+    >
+      <Heart size={size} fill={isInWishlist ? 'currentColor' : 'none'} />
+      {showText && (
+        <span>{isInWishlist ? 'Saved' : 'Save'}</span>
+      )}
+    </button>
+  );
+}
+
+================
+File: src/components/WishlistCount.tsx
+================
+// src/components/WishlistCount.tsx
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Heart } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+
+export function WishlistCount() {
+  const { user } = useAuth();
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchWishlistCount();
+
+      // Subscribe to changes in the wish_list_items table
+      const subscription = supabase
+        .channel('wish_list_changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'wish_list_items',
+          filter: `user_id=eq.${user.id}`,
+        }, () => {
+          fetchWishlistCount();
+        })
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user]);
+
+  async function fetchWishlistCount() {
+    try {
+      const { count, error } = await supabase
+        .from('wish_list_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      setCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching wishlist count:', error);
+    }
+  }
+
+  if (!user) return null;
+
+  return (
+    <Link to="/wishlist" className="relative text-gray-700 hover:text-indigo-600">
+      <Heart size={20} />
+      {count > 0 && (
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+          {count > 9 ? '9+' : count}
+        </span>
+      )}
+    </Link>
   );
 }
 
@@ -3133,7 +4509,7 @@ File: src/pages/Auth.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, ShoppingBag } from 'lucide-react';
+import { User, ShoppingBag, Package } from 'lucide-react';
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -3295,13 +4671,13 @@ export function Auth() {
 File: src/pages/Browse.tsx
 ================
 // src/pages/Browse.tsx
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
-import {Search, SlidersHorizontal, X, Loader, Filter, ArrowUpDown} from 'lucide-react';
+import {Loader, Search, SlidersHorizontal, X} from 'lucide-react';
 import {supabase} from '../lib/supabase';
-import {searchItems, SearchItem, SearchParams} from '../lib/elasticsearch';
+import {SearchItem, searchItems, SearchParams} from '../lib/elasticsearch';
 import {debounce} from 'lodash';
-import {SearchResultItem} from '../components/SearchResultItem';
+import {EnhancedSavedSearches} from '../components/EnhancedSavedSearches';
 
 interface Category {
     id: string;
@@ -3548,6 +4924,10 @@ export function Browse() {
                     </div>
                 </div>
             )}
+
+            <div className="mb-8">
+                <EnhancedSavedSearches/>
+            </div>
 
             {/* Items Grid */}
             {loading && items.length === 0 ? (
@@ -4221,69 +5601,76 @@ export function Home() {
 File: src/pages/ItemDetails.tsx
 ================
 // src/pages/ItemDetails.tsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { MessageSquare, Heart, AlertTriangle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
-import { useItemViews } from '../hooks/useAnalytics';
-import { trackItemView } from '../lib/recommendations';
-import { SimilarItems } from '../components/SimilarItems';
-import { RecentlyViewedItems } from '../components/RecentlyViewedItems';
-import { ShareListing } from '../components/ShareListing'; // New import
-import { AddToCollection } from '../components/AddToCollection'; // New import
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {AlertTriangle, MessageSquare} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {useAuth} from '../contexts/AuthContext';
+import {useItemViews} from '../hooks/useAnalytics';
+import {trackItemView} from '../lib/recommendations';
+import {SimilarItems} from '../components/SimilarItems';
+import {RecentlyViewedItems} from '../components/RecentlyViewedItems';
+import {ShareListing} from '../components/ShareListing'; // New import
+import {AddToCollection} from '../components/AddToCollection'; // New import
+import {WishListButton} from '../components/WishListButton';
+import {PriceAlertButton} from '../components/PriceAlertButton';
+import {PriceHistory} from '../components/PriceHistory';
+import {StockAlertButton} from '../components/StockAlertButton';
+import {UpdateStockStatus} from '../components/UpdateStockStatus';
+
 
 interface Item {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  condition: string;
-  selling_method: string;
-  images: string[];
-  created_at: string;
-  views: number;
-  seller: {
     id: string;
-    username: string;
-    rating: number;
-    total_ratings: number;
-  };
+    title: string;
+    description: string;
+    price: number;
+    condition: string;
+    selling_method: string;
+    images: string[];
+    created_at: string;
+    views: number;
+    stock_status: string; // Add this line
+    seller: {
+        id: string;
+        username: string;
+        rating: number;
+        total_ratings: number;
+    };
 }
 
 export function ItemDetails() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [item, setItem] = useState<Item | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [offerAmount, setOfferAmount] = useState('');
-  const [showOfferForm, setShowOfferForm] = useState(false);
-  const [error, setError] = useState('');
-  const [viewerCount, setViewerCount] = useState(0);
+    const {id} = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const {user} = useAuth();
+    const [item, setItem] = useState<Item | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedImage, setSelectedImage] = useState(0);
+    const [offerAmount, setOfferAmount] = useState('');
+    const [showOfferForm, setShowOfferForm] = useState(false);
+    const [error, setError] = useState('');
+    const [viewerCount, setViewerCount] = useState(0);
 
-  // Track item views for analytics
-  useItemViews(id!);
+    // Track item views for analytics
+    useItemViews(id!);
 
-  useEffect(() => {
-    if (id) {
-      fetchItem();
-      fetchViewerCount();
+    useEffect(() => {
+        if (id) {
+            fetchItem();
+            fetchViewerCount();
 
-      // Track view for recommendations
-      if (user) {
-        trackItemView(id);
-      }
-    }
-  }, [id, user]);
+            // Track view for recommendations
+            if (user) {
+                trackItemView(id);
+            }
+        }
+    }, [id, user]);
 
-  async function fetchItem() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('items')
-        .select(`
+    async function fetchItem() {
+        try {
+            setLoading(true);
+            const {data, error} = await supabase
+                .from('items')
+                .select(`
           *,
           seller:seller_id (
             id,
@@ -4292,267 +5679,293 @@ export function ItemDetails() {
             total_ratings
           )
         `)
-        .eq('id', id)
-        .single();
+                .eq('id', id)
+                .single();
 
-      if (error) throw error;
-      setItem(data);
-    } catch (error) {
-      console.error('Error fetching item:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchViewerCount() {
-    try {
-      const { data, error } = await supabase.rpc('get_unique_item_viewers', {
-        item_id: id,
-      });
-
-      if (error) throw error;
-      setViewerCount(data || 0);
-    } catch (error) {
-      console.error('Error fetching viewer count:', error);
-    }
-  }
-
-  async function handleMakeOffer() {
-    if (!user) {
-      navigate('/auth');
-      return;
+            if (error) throw error;
+            setItem(data);
+        } catch (error) {
+            console.error('Error fetching item:', error);
+        } finally {
+            setLoading(false);
+        }
     }
 
-    try {
-      setError('');
-      const { error } = await supabase
-        .from('offers')
-        .insert({
-          item_id: id,
-          buyer_id: user.id,
-          amount: parseFloat(offerAmount),
-          status: 'pending',
-        });
+    async function fetchViewerCount() {
+        try {
+            const {data, error} = await supabase.rpc('get_unique_item_viewers', {
+                item_id: id,
+            });
 
-      if (error) throw error;
-
-      // Create notification for seller
-      await supabase.rpc('create_notification', {
-        user_id: item?.seller.id,
-        title: 'New Offer',
-        content: `You received a new offer of $${offerAmount} for "${item?.title}"`,
-      });
-
-      setShowOfferForm(false);
-      setOfferAmount('');
-    } catch (error) {
-      console.error('Error making offer:', error);
-      setError('Failed to submit offer. Please try again.');
-    }
-  }
-
-  async function handleContactSeller() {
-    if (!user) {
-      navigate('/auth');
-      return;
+            if (error) throw error;
+            setViewerCount(data || 0);
+        } catch (error) {
+            console.error('Error fetching viewer count:', error);
+        }
     }
 
-    try {
-      setError('');
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user.id,
-          receiver_id: item?.seller.id,
-          item_id: id,
-          content: `Hi, I'm interested in "${item?.title}"`,
-        });
+    async function handleMakeOffer() {
+        if (!user) {
+            navigate('/auth');
+            return;
+        }
 
-      if (error) throw error;
-      navigate('/messages');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setError('Failed to send message. Please try again.');
+        try {
+            setError('');
+            const {error} = await supabase
+                .from('offers')
+                .insert({
+                    item_id: id,
+                    buyer_id: user.id,
+                    amount: parseFloat(offerAmount),
+                    status: 'pending',
+                });
+
+            if (error) throw error;
+
+            // Create notification for seller
+            await supabase.rpc('create_notification', {
+                user_id: item?.seller.id,
+                title: 'New Offer',
+                content: `You received a new offer of $${offerAmount} for "${item?.title}"`,
+            });
+
+            setShowOfferForm(false);
+            setOfferAmount('');
+        } catch (error) {
+            console.error('Error making offer:', error);
+            setError('Failed to submit offer. Please try again.');
+        }
     }
-  }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-96 bg-gray-200 rounded-lg mb-8" />
-          <div className="h-8 bg-gray-200 rounded mb-4" />
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-8" />
-          <div className="h-24 bg-gray-200 rounded mb-8" />
-        </div>
-      </div>
-    );
-  }
+    async function handleContactSeller() {
+        if (!user) {
+            navigate('/auth');
+            return;
+        }
 
-  if (!item) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Item Not Found</h2>
-        <p className="text-gray-600 mb-4">
-          The item you're looking for might have been removed or doesn't exist.
-        </p>
-        <button
-          onClick={() => navigate('/browse')}
-          className="text-indigo-600 hover:text-indigo-700"
-        >
-          Browse Other Items →
-        </button>
-      </div>
-    );
-  }
+        try {
+            setError('');
+            const {error} = await supabase
+                .from('messages')
+                .insert({
+                    sender_id: user.id,
+                    receiver_id: item?.seller.id,
+                    item_id: id,
+                    content: `Hi, I'm interested in "${item?.title}"`,
+                });
 
-  const isOwnItem = user?.id === item.seller.id;
+            if (error) throw error;
+            navigate('/messages');
+        } catch (error) {
+            console.error('Error sending message:', error);
+            setError('Failed to send message. Please try again.');
+        }
+    }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 flex items-center gap-2">
-          <AlertTriangle size={20} />
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Images */}
-        <div>
-          <div className="aspect-square rounded-lg overflow-hidden mb-4">
-            <img
-              src={item.images[selectedImage] || 'https://via.placeholder.com/800'}
-              alt={item.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          {item.images.length > 1 && (
-            <div className="grid grid-cols-4 gap-4">
-              {item.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`aspect-square rounded-lg overflow-hidden ${
-                    selectedImage === index
-                      ? 'ring-2 ring-indigo-500'
-                      : 'opacity-75 hover:opacity-100'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`${item.title} - Image ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+    if (loading) {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="animate-pulse">
+                    <div className="h-96 bg-gray-200 rounded-lg mb-8"/>
+                    <div className="h-8 bg-gray-200 rounded mb-4"/>
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"/>
+                    <div className="h-24 bg-gray-200 rounded mb-8"/>
+                </div>
             </div>
-          )}
-        </div>
+        );
+    }
 
-        {/* Details */}
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
-          <div className="flex items-center gap-4 mb-2">
-            <span className="text-2xl font-bold">${item.price}</span>
-            <span className="text-gray-600">
-              Condition: {item.condition.replace('_', ' ')}
-            </span>
-          </div>
-          <div className="text-gray-600 mb-6">
-            {item.views} views • {viewerCount} unique visitors
-          </div>
-
-          <div className="prose max-w-none mb-8">
-            <p>{item.description}</p>
-          </div>
-
-          <div className="flex items-center gap-4 mb-8">
-            <img
-              src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.seller.username}`}
-              alt={item.seller.username}
-              className="w-12 h-12 rounded-full"
-            />
-            <div>
-              <p className="font-medium">{item.seller.username}</p>
-              <p className="text-sm text-gray-600">
-                ★ {item.seller.rating} ({item.seller.total_ratings} ratings)
-              </p>
-            </div>
-          </div>
-
-          {!isOwnItem ? (
-            <div className="space-y-4">
-              {item.selling_method === 'fixed' ? (
+    if (!item) {
+        return (
+            <div className="container mx-auto px-4 py-8 text-center">
+                <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4"/>
+                <h2 className="text-2xl font-bold mb-2">Item Not Found</h2>
+                <p className="text-gray-600 mb-4">
+                    The item you're looking for might have been removed or doesn't exist.
+                </p>
                 <button
-                  onClick={handleContactSeller}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+                    onClick={() => navigate('/browse')}
+                    className="text-indigo-600 hover:text-indigo-700"
                 >
-                  Buy Now
+                    Browse Other Items →
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowOfferForm(!showOfferForm)}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
-                  >
-                    Make an Offer
-                  </button>
-                  {showOfferForm && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <input
-                        type="number"
-                        value={offerAmount}
-                        onChange={(e) => setOfferAmount(e.target.value)}
-                        placeholder="Enter your offer amount"
-                        className="w-full mb-2 p-2 border rounded"
-                      />
-                      <button
-                        onClick={handleMakeOffer}
-                        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                      >
-                        Submit Offer
-                      </button>
+            </div>
+        );
+    }
+
+    const isOwnItem = user?.id === item.seller.id;
+
+    return (
+        <div className="container mx-auto px-4 py-8">
+            {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 flex items-center gap-2">
+                    <AlertTriangle size={20}/>
+                    {error}
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                {/* Images */}
+                <div>
+                    <div className="aspect-square rounded-lg overflow-hidden mb-4">
+                        <img
+                            src={item.images[selectedImage] || 'https://via.placeholder.com/800'}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                        />
                     </div>
-                  )}
-                </>
-              )}
+                    {item.images.length > 1 && (
+                        <div className="grid grid-cols-4 gap-4">
+                            {item.images.map((image, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setSelectedImage(index)}
+                                    className={`aspect-square rounded-lg overflow-hidden ${
+                                        selectedImage === index
+                                            ? 'ring-2 ring-indigo-500'
+                                            : 'opacity-75 hover:opacity-100'
+                                    }`}
+                                >
+                                    <img
+                                        src={image}
+                                        alt={`${item.title} - Image ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-              <button
-                onClick={handleContactSeller}
-                className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-              >
-                <MessageSquare size={20} />
-                Contact Seller
-              </button>
+                {/* Details */}
+                <div>
+                    <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
+                    <div className="flex items-center gap-4 mb-2">
+                        <span className="text-2xl font-bold">${item.price}</span>
+                        <span className="text-gray-600">
+    Condition: {item.condition.replace('_', ' ')}
+  </span>
+                        <UpdateStockStatus
+                            itemId={item.id}
+                            currentStatus={item.stock_status}
+                            isSeller={isOwnItem}
+                            onUpdate={(newStatus) => setItem({...item, stock_status: newStatus})}
+                        />
+                    </div>
 
-              <div className="flex gap-4">
-                <AddToCollection itemId={item.id} /> {/* Replaced Save button */}
-                <ShareListing itemId={item.id} title={item.title} /> {/* Replaced Share button */}
-              </div>
+
+                    <div className="text-gray-600 mb-6">
+                        {item.views} views • {viewerCount} unique visitors
+                    </div>
+
+                    <div className="prose max-w-none mb-8">
+                        <p>{item.description}</p>
+                    </div>
+                    <PriceHistory itemId={item.id} currentPrice={item.price}/>
+
+                    <div className="flex items-center gap-4 mb-8">
+                        <img
+                            src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.seller.username}`}
+                            alt={item.seller.username}
+                            className="w-12 h-12 rounded-full"
+                        />
+                        <div>
+                            <p className="font-medium">{item.seller.username}</p>
+                            <p className="text-sm text-gray-600">
+                                ★ {item.seller.rating} ({item.seller.total_ratings} ratings)
+                            </p>
+                        </div>
+                    </div>
+
+                    {!isOwnItem ? (
+                        <div className="space-y-4">
+                            {item.selling_method === 'fixed' ? (
+                                <button
+                                    onClick={handleContactSeller}
+                                    className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+                                >
+                                    Buy Now
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => setShowOfferForm(!showOfferForm)}
+                                        className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+                                    >
+                                        Make an Offer
+                                    </button>
+                                    {showOfferForm && (
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <input
+                                                type="number"
+                                                value={offerAmount}
+                                                onChange={(e) => setOfferAmount(e.target.value)}
+                                                placeholder="Enter your offer amount"
+                                                className="w-full mb-2 p-2 border rounded"
+                                            />
+                                            <button
+                                                onClick={handleMakeOffer}
+                                                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                                            >
+                                                Submit Offer
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            <button
+                                onClick={handleContactSeller}
+                                className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+                            >
+                                <MessageSquare size={20}/>
+                                Contact Seller
+                            </button>
+
+                            <div className="flex gap-4">
+                                <AddToCollection itemId={item.id}/>
+                                <WishListButton itemId={item.id} size={20}/>
+                                <PriceAlertButton itemId={item.id} price={item.price} size={20}/>
+                                <StockAlertButton itemId={item.id} stockStatus={item.stock_status}
+                                                  size={20}/>
+                                <ShareListing itemId={item.id} title={item.title}/>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <p className="text-gray-600 mb-4">This is your item listing</p>
+
+                            <div className="flex flex-col gap-3">
+                                <UpdateStockStatus
+                                    itemId={item.id}
+                                    currentStatus={item.stock_status}
+                                    isSeller={true}
+                                    onUpdate={(newStatus) => setItem({
+                                        ...item,
+                                        stock_status: newStatus
+                                    })}
+                                />
+
+                                <button
+                                    onClick={() => navigate('/messages')}
+                                    className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-lg hover:bg-indigo-50"
+                                >
+                                    View Messages
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
-          ) : (
-            <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <p className="text-gray-600">This is your item listing</p>
-              <button
-                onClick={() => navigate('/messages')}
-                className="mt-2 text-indigo-600 hover:text-indigo-700"
-              >
-                View Messages →
-              </button>
-            </div>
-          )}
+
+            {/* Similar Items */}
+            <SimilarItems itemId={id!}/>
+
+            {/* Recently Viewed Items */}
+            {user && <RecentlyViewedItems/>}
         </div>
-      </div>
-
-      {/* Similar Items */}
-      <SimilarItems itemId={id!} />
-
-      {/* Recently Viewed Items */}
-      {user && <RecentlyViewedItems />}
-    </div>
-  );
+    );
 }
 
 ================
@@ -4865,6 +6278,180 @@ export function Notifications() {
     <div>
       <h1>Notifications</h1>
       {/* Implementation coming soon */}
+    </div>
+  );
+}
+
+================
+File: src/pages/PriceAlerts.tsx
+================
+// src/pages/PriceAlerts.tsx
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { BellRing, Loader, AlertTriangle, ArrowDown, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+
+interface PriceAlert {
+  id: string;
+  item_id: string;
+  title: string;
+  current_price: number;
+  target_price: number | null;
+  images: string[];
+  created_at: string;
+  notify_email: boolean;
+  notify_push: boolean;
+}
+
+export function PriceAlerts() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    fetchPriceAlerts();
+  }, [user]);
+
+  async function fetchPriceAlerts() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .rpc('get_price_alerts');
+
+      if (error) throw error;
+      setAlerts(data || []);
+    } catch (error) {
+      console.error('Error fetching price alerts:', error);
+      setError('Failed to load price alerts. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRemoveAlert(alertId: string) {
+    try {
+      // Get the item_id from the alert to toggle
+      const alert = alerts.find(a => a.id === alertId);
+      if (!alert) return;
+
+      const { error } = await supabase
+        .rpc('toggle_price_alert', { item_id: alert.item_id });
+
+      if (error) throw error;
+
+      // Remove the alert from the state
+      setAlerts(alerts.filter(a => a.id !== alertId));
+    } catch (error) {
+      console.error('Error removing price alert:', error);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Loader size={40} className="animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Loading your price alerts...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={fetchPriceAlerts}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <BellRing className="text-purple-500" />
+          Price Alerts
+        </h1>
+      </div>
+
+      {alerts.length === 0 ? (
+        <div className="bg-gray-50 p-12 rounded-lg text-center">
+          <BellRing size={64} className="mx-auto mb-4 text-gray-300" />
+          <h2 className="text-xl font-semibold mb-2">No price alerts set</h2>
+          <p className="text-gray-600 mb-6">Get notified when items you're interested in drop in price</p>
+          <Link
+            to="/browse"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+          >
+            Browse Items
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {alerts.map((alert) => (
+            <div key={alert.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative">
+                <button
+                  onClick={() => handleRemoveAlert(alert.id)}
+                  className="absolute top-2 right-2 bg-white bg-opacity-70 hover:bg-opacity-100 p-1 rounded-full z-10"
+                  aria-label="Remove alert"
+                >
+                  <X size={18} className="text-gray-500" />
+                </button>
+                <Link to={`/items/${alert.item_id}`} className="block">
+                  <div className="aspect-square relative">
+                    <img
+                      src={alert.images[0] || 'https://via.placeholder.com/400'}
+                      alt={alert.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </Link>
+              </div>
+              <div className="p-4">
+                <Link to={`/items/${alert.item_id}`} className="block">
+                  <h3 className="font-semibold text-lg mb-1 truncate">{alert.title}</h3>
+                </Link>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="text-lg font-medium">${alert.current_price}</div>
+                  {alert.target_price && (
+                    <div className="flex items-center gap-1 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                      <ArrowDown size={12} />
+                      <span>Alert at ${alert.target_price}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div>
+                    Created {new Date(alert.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="flex gap-1">
+                    {alert.notify_email && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded">Email</span>
+                    )}
+                    {alert.notify_push && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded">Push</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -5308,6 +6895,350 @@ export function Profile() {
 }
 
 ================
+File: src/pages/SavedSearchAlerts.tsx
+================
+// src/pages/SavedSearchAlerts.tsx
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Loader, AlertTriangle, Bell, X, Edit, Clock, Check } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+
+interface SavedSearch {
+  id: string;
+  name: string;
+  query: string;
+  filters: any;
+  notify_email: boolean;
+  notify_push: boolean;
+  alert_enabled: boolean;
+  alert_frequency: string;
+  created_at: string;
+  match_count: number;
+}
+
+export function SavedSearchAlerts() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searches, setSearches] = useState<SavedSearch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [editingSearchId, setEditingSearchId] = useState<string | null>(null);
+  const [alertSettings, setAlertSettings] = useState({
+    enabled: false,
+    frequency: 'daily'
+  });
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    fetchSavedSearches();
+  }, [user]);
+
+  async function fetchSavedSearches() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .rpc('get_saved_searches_with_alerts');
+
+      if (error) throw error;
+      setSearches(data || []);
+    } catch (error) {
+      console.error('Error fetching saved searches:', error);
+      setError('Failed to load saved searches. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteSearch(id: string) {
+    try {
+      const { error } = await supabase
+        .from('saved_searches')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setSearches(searches.filter(search => search.id !== id));
+    } catch (error) {
+      console.error('Error deleting saved search:', error);
+    }
+  }
+
+  function openAlertSettings(search: SavedSearch) {
+    setEditingSearchId(search.id);
+    setAlertSettings({
+      enabled: search.alert_enabled,
+      frequency: search.alert_frequency
+    });
+  }
+
+  async function saveAlertSettings() {
+    if (!editingSearchId) return;
+
+    try {
+      const { error } = await supabase
+        .rpc('toggle_saved_search_alert', {
+          search_id: editingSearchId,
+          enable: alertSettings.enabled,
+          frequency: alertSettings.frequency
+        });
+
+      if (error) throw error;
+
+      // Update the search in the local state
+      setSearches(searches.map(search => {
+        if (search.id === editingSearchId) {
+          return {
+            ...search,
+            alert_enabled: alertSettings.enabled,
+            alert_frequency: alertSettings.frequency
+          };
+        }
+        return search;
+      }));
+
+      // Close the edit panel
+      setEditingSearchId(null);
+    } catch (error) {
+      console.error('Error updating alert settings:', error);
+    }
+  }
+
+  const runSearchUrl = (search: SavedSearch) => {
+    let url = `/browse?query=${encodeURIComponent(search.query)}`;
+
+    if (search.filters) {
+      if (search.filters.category) url += `&category=${encodeURIComponent(search.filters.category)}`;
+      if (search.filters.minPrice) url += `&minPrice=${encodeURIComponent(search.filters.minPrice)}`;
+      if (search.filters.maxPrice) url += `&maxPrice=${encodeURIComponent(search.filters.maxPrice)}`;
+      if (search.filters.condition) url += `&condition=${encodeURIComponent(search.filters.condition)}`;
+    }
+
+    return url;
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Loader size={40} className="animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Loading your saved searches...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={fetchSavedSearches}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Search className="text-indigo-500" />
+          Saved Searches
+        </h1>
+        <Link
+          to="/browse"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          New Search
+        </Link>
+      </div>
+
+      {searches.length === 0 ? (
+        <div className="bg-gray-50 p-12 rounded-lg text-center">
+          <Search size={64} className="mx-auto mb-4 text-gray-300" />
+          <h2 className="text-xl font-semibold mb-2">No saved searches</h2>
+          <p className="text-gray-600 mb-6">Save your favorite searches and get notified about new matching items</p>
+          <Link
+            to="/browse"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+          >
+            Browse Items
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {searches.map((search) => (
+            <div key={search.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 border-b flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Search size={20} className="text-indigo-600" />
+                  <h3 className="font-semibold text-lg">{search.name}</h3>
+                  {search.alert_enabled && (
+                    <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <Bell size={12} />
+                      Alerts {search.alert_frequency}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openAlertSettings(search)}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                    aria-label="Edit alerts"
+                  >
+                    <Edit size={16} className="text-gray-600" />
+                  </button>
+                  <Link
+                    to={runSearchUrl(search)}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                    aria-label="Run search"
+                  >
+                    <Search size={16} className="text-indigo-600" />
+                  </Link>
+                  <button
+                    onClick={() => handleDeleteSearch(search.id)}
+                    className="p-2 rounded-full hover:bg-gray-100"
+                    aria-label="Delete search"
+                  >
+                    <X size={16} className="text-red-600" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-gray-700 font-medium">Query:</span>
+                  <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                    {search.query || 'Any'}
+                  </span>
+
+                  {search.filters?.category && (
+                    <>
+                      <span className="text-gray-700 font-medium">Category:</span>
+                      <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        {search.filters.category}
+                      </span>
+                    </>
+                  )}
+
+                  {(search.filters?.minPrice || search.filters?.maxPrice) && (
+                    <>
+                      <span className="text-gray-700 font-medium">Price:</span>
+                      <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        {search.filters?.minPrice ? `$${search.filters.minPrice}` : '$0'} -
+                        {search.filters?.maxPrice ? `$${search.filters.maxPrice}` : 'Any'}
+                      </span>
+                    </>
+                  )}
+
+                  {search.filters?.condition && (
+                    <>
+                      <span className="text-gray-700 font-medium">Condition:</span>
+                      <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        {search.filters.condition.replace('_', ' ')}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <div className="text-gray-500">
+                    Created {new Date(search.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="font-medium">
+                    {search.match_count} matching items
+                  </div>
+                </div>
+              </div>
+
+              {/* Edit Alert Settings Panel */}
+              {editingSearchId === search.id && (
+                <div className="p-4 bg-gray-50 border-t">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-medium">Alert Settings</h4>
+                    <button
+                      onClick={() => setEditingSearchId(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={alertSettings.enabled}
+                        onChange={(e) => setAlertSettings({...alertSettings, enabled: e.target.checked})}
+                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                      <span className="text-gray-700">Enable alerts for new matching items</span>
+                    </label>
+
+                    {alertSettings.enabled && (
+                      <div className="pl-6">
+                        <p className="text-sm text-gray-600 mb-2">Alert frequency:</p>
+                        <div className="flex gap-3">
+                          <label className="flex items-center gap-1">
+                            <input
+                              type="radio"
+                              name="frequency"
+                              value="daily"
+                              checked={alertSettings.frequency === 'daily'}
+                              onChange={() => setAlertSettings({...alertSettings, frequency: 'daily'})}
+                              className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                            />
+                            <span className="text-gray-700">Daily</span>
+                          </label>
+                          <label className="flex items-center gap-1">
+                            <input
+                              type="radio"
+                              name="frequency"
+                              value="weekly"
+                              checked={alertSettings.frequency === 'weekly'}
+                              onChange={() => setAlertSettings({...alertSettings, frequency: 'weekly'})}
+                              className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                            />
+                            <span className="text-gray-700">Weekly</span>
+                          </label>
+                        </div>
+
+                        <div className="flex gap-2 items-center mt-2 text-xs text-gray-500">
+                          <Clock size={14} />
+                          <span>You'll receive notifications {alertSettings.frequency === 'daily' ? 'once a day' : 'once a week'}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={saveAlertSettings}
+                        className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700"
+                      >
+                        <Check size={16} />
+                        Save Settings
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
 File: src/pages/Settings.tsx
 ================
 // src/pages/Settings.tsx
@@ -5570,11 +7501,316 @@ export function Settings() {
 }
 
 ================
+File: src/pages/StockAlerts.tsx
+================
+// src/pages/StockAlerts.tsx
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, Loader, AlertTriangle, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { StockStatus } from '../components/StockStatus';
+
+interface StockAlert {
+  id: string;
+  item_id: string;
+  title: string;
+  stock_status: string;
+  price: number;
+  images: string[];
+  created_at: string;
+  notify_email: boolean;
+  notify_push: boolean;
+}
+
+export function StockAlerts() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [alerts, setAlerts] = useState<StockAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    fetchStockAlerts();
+  }, [user]);
+
+  async function fetchStockAlerts() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .rpc('get_stock_alerts');
+
+      if (error) throw error;
+      setAlerts(data || []);
+    } catch (error) {
+      console.error('Error fetching stock alerts:', error);
+      setError('Failed to load stock alerts. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRemoveAlert(alertId: string) {
+    try {
+      // Get the item_id from the alert to toggle
+      const alert = alerts.find(a => a.id === alertId);
+      if (!alert) return;
+
+      const { error } = await supabase
+        .rpc('toggle_stock_alert', { item_id: alert.item_id });
+
+      if (error) throw error;
+
+      // Remove the alert from the state
+      setAlerts(alerts.filter(a => a.id !== alertId));
+    } catch (error) {
+      console.error('Error removing stock alert:', error);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Loader size={40} className="animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Loading your stock alerts...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={fetchStockAlerts}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Bell className="text-orange-500" />
+          Back in Stock Alerts
+        </h1>
+      </div>
+
+      {alerts.length === 0 ? (
+        <div className="bg-gray-50 p-12 rounded-lg text-center">
+          <Bell size={64} className="mx-auto mb-4 text-gray-300" />
+          <h2 className="text-xl font-semibold mb-2">No stock alerts set</h2>
+          <p className="text-gray-600 mb-6">Get notified when out-of-stock items become available again</p>
+          <Link
+            to="/browse"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+          >
+            Browse Items
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {alerts.map((alert) => (
+            <div key={alert.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative">
+                <button
+                  onClick={() => handleRemoveAlert(alert.id)}
+                  className="absolute top-2 right-2 bg-white bg-opacity-70 hover:bg-opacity-100 p-1 rounded-full z-10"
+                  aria-label="Remove alert"
+                >
+                  <X size={18} className="text-gray-500" />
+                </button>
+                <Link to={`/items/${alert.item_id}`} className="block">
+                  <div className="aspect-square relative">
+                    <img
+                      src={alert.images[0] || 'https://via.placeholder.com/400'}
+                      alt={alert.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <StockStatus status={alert.stock_status} />
+                    </div>
+                  </div>
+                </Link>
+              </div>
+              <div className="p-4">
+                <Link to={`/items/${alert.item_id}`} className="block">
+                  <h3 className="font-semibold text-lg mb-1 truncate">{alert.title}</h3>
+                </Link>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-lg font-medium">${alert.price}</div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div>
+                    Alert created {new Date(alert.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="flex gap-1">
+                    {alert.notify_email && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded">Email</span>
+                    )}
+                    {alert.notify_push && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded">Push</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
+File: src/pages/Wishlist.tsx
+================
+// src/pages/Wishlist.tsx
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Loader, AlertTriangle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { WishListButton } from '../components/WishListButton';
+
+interface WishlistItem {
+  id: string;
+  title: string;
+  price: number;
+  condition: string;
+  images: string[];
+  added_at: string;
+}
+
+export function Wishlist() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    fetchWishlistItems();
+  }, [user]);
+
+  async function fetchWishlistItems() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .rpc('get_wishlist_items', { limit_val: 50, offset_val: 0 });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Error fetching wishlist items:', error);
+      setError('Failed to load wishlist items. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Loader size={40} className="animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Loading your wishlist...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={fetchWishlistItems}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Heart className="text-red-500" />
+          My Wishlist
+        </h1>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="bg-gray-50 p-12 rounded-lg text-center">
+          <Heart size={64} className="mx-auto mb-4 text-gray-300" />
+          <h2 className="text-xl font-semibold mb-2">Your wishlist is empty</h2>
+          <p className="text-gray-600 mb-6">Save items you're interested in by clicking the heart icon</p>
+          <Link
+            to="/browse"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+          >
+            Browse Items
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {items.map((item) => (
+            <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <Link to={`/items/${item.id}`} className="block">
+                <div className="aspect-square relative">
+                  <img
+                    src={item.images[0] || 'https://via.placeholder.com/400'}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-sm font-medium">
+                    ${item.price}
+                  </div>
+                </div>
+              </Link>
+              <div className="p-4">
+                <Link to={`/items/${item.id}`} className="block">
+                  <h3 className="font-semibold text-lg mb-1 truncate">{item.title}</h3>
+                  <p className="text-sm text-gray-600 mb-3">{item.condition.replace('_', ' ')}</p>
+                </Link>
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-gray-500">
+                    Added {new Date(item.added_at).toLocaleDateString()}
+                  </p>
+                  <WishListButton itemId={item.id} showText={false} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
 File: src/App.tsx
 ================
 // src/App.tsx
 import React from 'react';
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import {Navbar} from './components/Navbar';
 import {Footer} from './components/Footer';
 import {Home} from './pages/Home';
@@ -5587,8 +7823,13 @@ import {Notifications} from './pages/Notifications';
 import {Auth} from './pages/Auth';
 import {CreateListing} from './pages/CreateListing';
 import {Admin} from './pages/Admin';
+import {Wishlist} from './pages/Wishlist'; // Import the new Wishlist page
 import {AuthProvider} from './contexts/AuthContext';
 import {Toaster} from './components/ui/Toaster';
+import {PriceAlerts} from './pages/PriceAlerts';
+import {StockAlerts} from './pages/StockAlerts';
+import {SavedSearchAlerts} from './pages/SavedSearchAlerts';
+
 
 function App() {
     return (
@@ -5608,6 +7849,11 @@ function App() {
                             <Route path="/auth" element={<Auth/>}/>
                             <Route path="/create-listing" element={<CreateListing/>}/>
                             <Route path="/admin" element={<Admin/>}/>
+                            <Route path="/wishlist" element={<Wishlist/>}/>
+                            <Route path="/price-alerts"
+                                   element={<PriceAlerts/>}/>
+                            <Route path="/stock-alerts" element={<StockAlerts/>}/>
+                            <Route path="/saved-search-alerts" element={<SavedSearchAlerts/>}/>
                         </Routes>
                     </main>
                     <Footer/>
@@ -5681,6 +7927,66 @@ createRoot(document.getElementById('root')!).render(
 File: src/vite-env.d.ts
 ================
 /// <reference types="vite/client" />
+
+================
+File: supabase/functions/scheduled-tasks.ts
+================
+// supabase/functions/scheduled-tasks.ts
+// A Supabase Edge function that will run on a schedule to process notifications
+
+import {createClient} from '@supabase/supabase-js';
+
+// Setup Supabase client (use service role for admin functions)
+const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
+
+// Handler for scheduled invoke
+export const handler = async () => {
+    try {
+        // Process price drop notifications
+        await supabaseAdmin.rpc('process_price_drop_notifications');
+        console.log('Price drop notifications processed');
+
+        // Process back-in-stock notifications
+        await supabaseAdmin.rpc('process_stock_notifications');
+        console.log('Stock notifications processed');
+
+        // Process saved search alerts
+        await supabaseAdmin.rpc('process_saved_search_alerts');
+        console.log('Saved search alerts processed');
+
+        return new Response(JSON.stringify({
+            success: true,
+            message: 'All notification tasks processed successfully'
+        }), {
+            headers: {'Content-Type': 'application/json'},
+            status: 200
+        });
+    } catch (error) {
+        console.error('Error processing notification tasks:', error);
+
+        return new Response(JSON.stringify({
+            success: false,
+            error: error.message
+        }), {
+            headers: {'Content-Type': 'application/json'},
+            status: 500
+        });
+    }
+};
+
+/*
+Setup instructions:
+
+1. Create this Edge Function in your Supabase project
+2. Set up CRON job to run this function on a schedule (e.g., daily at midnight)
+3. Configure environment variables for SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
+
+Example CRON schedule (daily at midnight):
+0 0 * * *
+*/
 
 ================
 File: supabase/migrations/20250225220246_foggy_sun.sql
@@ -9601,6 +11907,1401 @@ set updated_at = created_at
 where updated_at is null;
 
 ================
+File: supabase/migrations/20250302160147_add_wish_list_items.sql
+================
+-- Migration: Add Wish List Feature
+
+-- Create wish list items table
+CREATE TABLE wish_list_items (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  item_id uuid REFERENCES items(id) ON DELETE CASCADE NOT NULL,
+  added_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, item_id)
+);
+
+-- Enable RLS
+ALTER TABLE wish_list_items ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Users can manage their wish list items"
+  ON wish_list_items FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Function to check if an item is in a user's wish list
+CREATE OR REPLACE FUNCTION is_in_wishlist(item_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM wish_list_items
+    WHERE user_id = auth.uid()
+    AND item_id = is_in_wishlist.item_id
+  );
+$$;
+
+-- Function to add item to wish list
+CREATE OR REPLACE FUNCTION add_to_wishlist(item_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO wish_list_items (user_id, item_id)
+  VALUES (auth.uid(), item_id)
+  ON CONFLICT (user_id, item_id) DO NOTHING;
+END;
+$$;
+
+-- Function to remove item from wish list
+CREATE OR REPLACE FUNCTION remove_from_wishlist(item_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM wish_list_items
+  WHERE user_id = auth.uid()
+  AND item_id = remove_from_wishlist.item_id;
+END;
+$$;
+
+-- Function to get user's wish list items
+CREATE OR REPLACE FUNCTION get_wishlist_items(limit_val int DEFAULT 50, offset_val int DEFAULT 0)
+RETURNS TABLE (
+  id uuid,
+  title text,
+  price decimal,
+  condition text,
+  images text[],
+  added_at timestamptz
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT
+    i.id,
+    i.title,
+    i.price,
+    i.condition,
+    i.images,
+    wl.added_at
+  FROM wish_list_items wl
+  JOIN items i ON wl.item_id = i.id
+  WHERE wl.user_id = auth.uid()
+    AND i.is_active = true
+  ORDER BY wl.added_at DESC
+  LIMIT limit_val
+  OFFSET offset_val;
+$$;
+
+================
+File: supabase/migrations/20250302160432_add_price_history.sql
+================
+-- Migration: Add Price Drop Alerts Feature
+
+-- Create price history table to track price changes
+CREATE TABLE price_history (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id uuid REFERENCES items(id) ON DELETE CASCADE NOT NULL,
+  old_price decimal(10,2) NOT NULL,
+  new_price decimal(10,2) NOT NULL,
+  changed_at timestamptz DEFAULT now()
+);
+
+-- Create price alerts table
+CREATE TABLE price_alerts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  item_id uuid REFERENCES items(id) ON DELETE CASCADE NOT NULL,
+  target_price decimal(10,2), -- Optional target price (if null, alert on any drop)
+  created_at timestamptz DEFAULT now(),
+  last_notified_at timestamptz,
+  notify_email boolean DEFAULT true,
+  notify_push boolean DEFAULT true,
+  UNIQUE(user_id, item_id)
+);
+
+-- Enable RLS
+ALTER TABLE price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE price_alerts ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Admin can manage price history"
+  ON price_history FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid()
+      AND role IN ('admin', 'super_admin')
+    )
+  );
+
+CREATE POLICY "Users can view price history"
+  ON price_history FOR SELECT
+  USING (true);
+
+CREATE POLICY "Users can manage their price alerts"
+  ON price_alerts FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Function to check if an item has a price alert
+CREATE OR REPLACE FUNCTION has_price_alert(item_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM price_alerts
+    WHERE user_id = auth.uid()
+    AND item_id = has_price_alert.item_id
+  );
+$$;
+
+-- Function to toggle price alert
+CREATE OR REPLACE FUNCTION toggle_price_alert(
+  item_id uuid,
+  target_price decimal DEFAULT NULL,
+  notify_email boolean DEFAULT true,
+  notify_push boolean DEFAULT true
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  alert_exists boolean;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1 FROM price_alerts
+    WHERE user_id = auth.uid()
+    AND item_id = toggle_price_alert.item_id
+  ) INTO alert_exists;
+
+  IF alert_exists THEN
+    -- Remove existing alert
+    DELETE FROM price_alerts
+    WHERE user_id = auth.uid()
+    AND item_id = toggle_price_alert.item_id;
+    RETURN false;
+  ELSE
+    -- Create new alert
+    INSERT INTO price_alerts (
+      user_id,
+      item_id,
+      target_price,
+      notify_email,
+      notify_push
+    )
+    VALUES (
+      auth.uid(),
+      toggle_price_alert.item_id,
+      toggle_price_alert.target_price,
+      toggle_price_alert.notify_email,
+      toggle_price_alert.notify_push
+    );
+    RETURN true;
+  END IF;
+END;
+$$;
+
+-- Function to get user's price alerts
+CREATE OR REPLACE FUNCTION get_price_alerts(limit_val int DEFAULT 50, offset_val int DEFAULT 0)
+RETURNS TABLE (
+  id uuid,
+  item_id uuid,
+  title text,
+  current_price decimal,
+  target_price decimal,
+  images text[],
+  created_at timestamptz,
+  notify_email boolean,
+  notify_push boolean
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT
+    pa.id,
+    i.id as item_id,
+    i.title,
+    i.price as current_price,
+    pa.target_price,
+    i.images,
+    pa.created_at,
+    pa.notify_email,
+    pa.notify_push
+  FROM price_alerts pa
+  JOIN items i ON pa.item_id = i.id
+  WHERE pa.user_id = auth.uid()
+    AND i.is_active = true
+  ORDER BY pa.created_at DESC
+  LIMIT limit_val
+  OFFSET offset_val;
+$$;
+
+-- Trigger to track price changes
+CREATE OR REPLACE FUNCTION track_price_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Only track actual price changes
+  IF OLD.price != NEW.price THEN
+    INSERT INTO price_history (
+      item_id,
+      old_price,
+      new_price
+    )
+    VALUES (
+      NEW.id,
+      OLD.price,
+      NEW.price
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Attach trigger to items table
+DROP TRIGGER IF EXISTS items_price_change_trigger ON items;
+CREATE TRIGGER items_price_change_trigger
+AFTER UPDATE OF price ON items
+FOR EACH ROW
+EXECUTE FUNCTION track_price_change();
+
+-- Function to process price drop notifications
+CREATE OR REPLACE FUNCTION process_price_drop_notifications()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  price_change record;
+  alert record;
+BEGIN
+  -- Get recent price drops (last 24 hours)
+  FOR price_change IN
+    SELECT ph.item_id, i.title, ph.old_price, ph.new_price
+    FROM price_history ph
+    JOIN items i ON ph.item_id = i.id
+    WHERE ph.changed_at > now() - interval '24 hours'
+      AND ph.new_price < ph.old_price -- Price dropped
+      AND i.is_active = true
+  LOOP
+    -- Find users who have alerts for this item
+    FOR alert IN
+      SELECT pa.id, pa.user_id, pa.target_price, pa.notify_email, pa.notify_push
+      FROM price_alerts pa
+      WHERE pa.item_id = price_change.item_id
+        AND (
+          pa.target_price IS NULL -- Alert on any drop
+          OR price_change.new_price <= pa.target_price -- Price reached target
+        )
+        AND (
+          pa.last_notified_at IS NULL -- Never notified
+          OR pa.last_notified_at < now() - interval '7 days' -- Don't spam notifications
+        )
+    LOOP
+      -- Create notification
+      INSERT INTO notifications (
+        user_id,
+        title,
+        content,
+        read
+      )
+      VALUES (
+        alert.user_id,
+        'Price Drop Alert',
+        format(
+          'Price dropped for "%s" from $%s to $%s',
+          price_change.title,
+          price_change.old_price,
+          price_change.new_price
+        ),
+        false
+      );
+
+      -- Update last_notified_at
+      UPDATE price_alerts
+      SET last_notified_at = now()
+      WHERE id = alert.id;
+
+      -- Send email notification
+      IF alert.notify_email THEN
+        -- Use your email notification system here
+        -- This is a placeholder for the actual implementation
+        PERFORM 1;
+      END IF;
+
+      -- Send push notification
+      IF alert.notify_push THEN
+        -- Use your push notification system here
+        -- This is a placeholder for the actual implementation
+        PERFORM 1;
+      END IF;
+    END LOOP;
+  END LOOP;
+END;
+$$;
+
+================
+File: supabase/migrations/20250302160910_add_Back-in-Stock.sql
+================
+-- Migration: Add Back-in-Stock Notifications Feature
+
+-- Add stock_status to items table
+ALTER TABLE items
+ADD COLUMN stock_status text NOT NULL DEFAULT 'in_stock'
+CHECK (stock_status IN ('in_stock', 'low_stock', 'out_of_stock'));
+
+-- Create stock alerts table
+CREATE TABLE stock_alerts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  item_id uuid REFERENCES items(id) ON DELETE CASCADE NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  last_notified_at timestamptz,
+  notify_email boolean DEFAULT true,
+  notify_push boolean DEFAULT true,
+  UNIQUE(user_id, item_id)
+);
+
+-- Create stock change history table
+CREATE TABLE stock_history (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id uuid REFERENCES items(id) ON DELETE CASCADE NOT NULL,
+  old_status text NOT NULL,
+  new_status text NOT NULL,
+  changed_at timestamptz DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE stock_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_history ENABLE ROW LEVEL SECURITY;
+
+-- Policies
+CREATE POLICY "Users can manage their stock alerts"
+  ON stock_alerts FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view stock history"
+  ON stock_history FOR SELECT
+  USING (true);
+
+CREATE POLICY "Admin can manage stock history"
+  ON stock_history FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid()
+      AND role IN ('admin', 'super_admin')
+    )
+  );
+
+-- Function to check if an item has a stock alert
+CREATE OR REPLACE FUNCTION has_stock_alert(item_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM stock_alerts
+    WHERE user_id = auth.uid()
+    AND item_id = has_stock_alert.item_id
+  );
+$$;
+
+-- Function to toggle stock alert
+CREATE OR REPLACE FUNCTION toggle_stock_alert(
+  item_id uuid,
+  notify_email boolean DEFAULT true,
+  notify_push boolean DEFAULT true
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  alert_exists boolean;
+  item_status text;
+BEGIN
+  -- Check if alert already exists
+  SELECT EXISTS (
+    SELECT 1 FROM stock_alerts
+    WHERE user_id = auth.uid()
+    AND item_id = toggle_stock_alert.item_id
+  ) INTO alert_exists;
+
+  -- Get item status
+  SELECT stock_status INTO item_status
+  FROM items
+  WHERE id = toggle_stock_alert.item_id;
+
+  IF alert_exists THEN
+    -- Remove existing alert
+    DELETE FROM stock_alerts
+    WHERE user_id = auth.uid()
+    AND item_id = toggle_stock_alert.item_id;
+    RETURN false;
+  ELSE
+    -- Check if item is out of stock (only allow alerts for out of stock items)
+    IF item_status != 'out_of_stock' THEN
+      RAISE EXCEPTION 'Cannot set alert for in-stock item';
+    END IF;
+
+    -- Create new alert
+    INSERT INTO stock_alerts (
+      user_id,
+      item_id,
+      notify_email,
+      notify_push
+    )
+    VALUES (
+      auth.uid(),
+      toggle_stock_alert.item_id,
+      toggle_stock_alert.notify_email,
+      toggle_stock_alert.notify_push
+    );
+    RETURN true;
+  END IF;
+END;
+$$;
+
+-- Function to get user's stock alerts
+CREATE OR REPLACE FUNCTION get_stock_alerts(limit_val int DEFAULT 50, offset_val int DEFAULT 0)
+RETURNS TABLE (
+  id uuid,
+  item_id uuid,
+  title text,
+  stock_status text,
+  price decimal,
+  images text[],
+  created_at timestamptz,
+  notify_email boolean,
+  notify_push boolean
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT
+    sa.id,
+    i.id as item_id,
+    i.title,
+    i.stock_status,
+    i.price,
+    i.images,
+    sa.created_at,
+    sa.notify_email,
+    sa.notify_push
+  FROM stock_alerts sa
+  JOIN items i ON sa.item_id = i.id
+  WHERE sa.user_id = auth.uid()
+    AND i.is_active = true
+  ORDER BY sa.created_at DESC
+  LIMIT limit_val
+  OFFSET offset_val;
+$$;
+
+-- Trigger to track stock status changes
+CREATE OR REPLACE FUNCTION track_stock_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Only track actual status changes
+  IF OLD.stock_status != NEW.stock_status THEN
+    INSERT INTO stock_history (
+      item_id,
+      old_status,
+      new_status
+    )
+    VALUES (
+      NEW.id,
+      OLD.stock_status,
+      NEW.stock_status
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Attach trigger to items table
+DROP TRIGGER IF EXISTS items_stock_change_trigger ON items;
+CREATE TRIGGER items_stock_change_trigger
+AFTER UPDATE OF stock_status ON items
+FOR EACH ROW
+EXECUTE FUNCTION track_stock_change();
+
+-- Function to process back-in-stock notifications
+CREATE OR REPLACE FUNCTION process_stock_notifications()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  stock_change record;
+  alert record;
+BEGIN
+  -- Get recent back-in-stock items (last 24 hours)
+  FOR stock_change IN
+    SELECT sh.item_id, i.title, sh.old_status, sh.new_status
+    FROM stock_history sh
+    JOIN items i ON sh.item_id = i.id
+    WHERE sh.changed_at > now() - interval '24 hours'
+      AND sh.old_status = 'out_of_stock'
+      AND sh.new_status = 'in_stock'
+      AND i.is_active = true
+  LOOP
+    -- Find users who have alerts for this item
+    FOR alert IN
+      SELECT sa.id, sa.user_id, sa.notify_email, sa.notify_push
+      FROM stock_alerts sa
+      WHERE sa.item_id = stock_change.item_id
+        AND (
+          sa.last_notified_at IS NULL -- Never notified
+          OR sa.last_notified_at < now() - interval '7 days' -- Don't spam notifications
+        )
+    LOOP
+      -- Create notification
+      INSERT INTO notifications (
+        user_id,
+        title,
+        content,
+        read
+      )
+      VALUES (
+        alert.user_id,
+        'Back in Stock Alert',
+        format(
+          '"%s" is back in stock!',
+          stock_change.title
+        ),
+        false
+      );
+
+      -- Update last_notified_at
+      UPDATE stock_alerts
+      SET last_notified_at = now()
+      WHERE id = alert.id;
+
+      -- Send email notification
+      IF alert.notify_email THEN
+        -- Use your email notification system here
+        -- This is a placeholder for the actual implementation
+        PERFORM 1;
+      END IF;
+
+      -- Send push notification
+      IF alert.notify_push THEN
+        -- Use your push notification system here
+        -- This is a placeholder for the actual implementation
+        PERFORM 1;
+      END IF;
+    END LOOP;
+  END LOOP;
+END;
+$$;
+
+-- Update item functions to handle stock status
+CREATE OR REPLACE FUNCTION update_item_stock_status(
+  item_id uuid,
+  new_stock_status text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if user is the seller or admin
+  IF NOT EXISTS (
+    SELECT 1 FROM items i
+    WHERE i.id = update_item_stock_status.item_id
+    AND (
+      i.seller_id = auth.uid()
+      OR EXISTS (
+        SELECT 1 FROM profiles
+        WHERE id = auth.uid()
+        AND role IN ('admin', 'super_admin')
+      )
+    )
+  ) THEN
+    RAISE EXCEPTION 'Not authorized to update item stock status';
+  END IF;
+
+  -- Update stock status
+  UPDATE items
+  SET
+    stock_status = new_stock_status,
+    updated_at = now()
+  WHERE id = update_item_stock_status.item_id;
+END;
+$$;
+
+================
+File: supabase/migrations/20250302161629_add_saved_searches.sql
+================
+-- Migration: Add Enhanced Saved Searches with Alerts
+
+-- Modify saved_searches table to add alert functionality
+ALTER TABLE saved_searches
+ADD COLUMN alert_enabled boolean DEFAULT false,
+ADD COLUMN last_alert_sent timestamptz,
+ADD COLUMN alert_frequency text DEFAULT 'daily'
+  CHECK (alert_frequency IN ('daily', 'weekly', 'instant'));
+
+-- Create function to get matching items for a saved search
+CREATE OR REPLACE FUNCTION get_saved_search_matches(
+  search_id uuid,
+  since_timestamp timestamptz DEFAULT NULL
+)
+RETURNS TABLE (
+  id uuid,
+  title text,
+  price decimal,
+  condition text,
+  images text[],
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  search_record record;
+  query_condition text := '';
+  filter_conditions text := '';
+BEGIN
+  -- Get the saved search
+  SELECT * INTO search_record FROM saved_searches WHERE id = search_id;
+
+  -- If no search found, return empty set
+  IF search_record IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Build the query condition for text search
+  IF search_record.query != '' THEN
+    query_condition := format(
+      'AND (title ILIKE %L OR description ILIKE %L)',
+      '%' || search_record.query || '%',
+      '%' || search_record.query || '%'
+    );
+  END IF;
+
+  -- Build filter conditions from JSON
+  IF search_record.filters ? 'category' AND search_record.filters->>'category' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND category_id = (SELECT id FROM categories WHERE slug = %L)',
+      search_record.filters->>'category'
+    );
+  END IF;
+
+  IF search_record.filters ? 'minPrice' AND search_record.filters->>'minPrice' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND price >= %s',
+      search_record.filters->>'minPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'maxPrice' AND search_record.filters->>'maxPrice' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND price <= %s',
+      search_record.filters->>'maxPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'condition' AND search_record.filters->>'condition' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND condition = %L',
+      search_record.filters->>'condition'
+    );
+  END IF;
+
+  -- Add timestamp condition if provided
+  IF since_timestamp IS NOT NULL THEN
+    filter_conditions := filter_conditions || format(
+      ' AND created_at > %L',
+      since_timestamp
+    );
+  END IF;
+
+  -- Build and execute the final query
+  RETURN QUERY EXECUTE format(
+    'SELECT id, title, price, condition, images, created_at FROM items
+     WHERE is_active = true %s %s
+     ORDER BY created_at DESC',
+    query_condition,
+    filter_conditions
+  );
+END;
+$$;
+
+-- Function to process saved search alerts
+CREATE OR REPLACE FUNCTION process_saved_search_alerts()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  search_record record;
+  matches_count integer;
+  alert_window timestamptz;
+  user_id uuid;
+BEGIN
+  -- Process each saved search with alerts enabled
+  FOR search_record IN
+    SELECT ss.*, p.id as user_id
+    FROM saved_searches ss
+    JOIN profiles p ON ss.user_id = p.id
+    WHERE ss.alert_enabled = true
+      AND (
+        ss.last_alert_sent IS NULL
+        OR (
+          ss.alert_frequency = 'daily' AND ss.last_alert_sent < now() - interval '1 day'
+          OR ss.alert_frequency = 'weekly' AND ss.last_alert_sent < now() - interval '7 days'
+        )
+      )
+  LOOP
+    user_id := search_record.user_id;
+
+    -- Determine time window based on alert frequency and last alert
+    IF search_record.last_alert_sent IS NULL THEN
+      -- For new alerts, check items from the last 7 days
+      alert_window := now() - interval '7 days';
+    ELSE
+      -- For existing alerts, check items since the last alert
+      alert_window := search_record.last_alert_sent;
+    END IF;
+
+    -- Count new matches
+    SELECT count(*) INTO matches_count
+    FROM get_saved_search_matches(search_record.id, alert_window);
+
+    -- If there are new matches, send a notification
+    IF matches_count > 0 THEN
+      -- Create notification
+      INSERT INTO notifications (
+        user_id,
+        title,
+        content,
+        read
+      )
+      VALUES (
+        user_id,
+        'New Items for Your Saved Search',
+        format(
+          'Found %s new item(s) matching your saved search "%s"',
+          matches_count,
+          search_record.name
+        ),
+        false
+      );
+
+      -- Update last_alert_sent
+      UPDATE saved_searches
+      SET last_alert_sent = now()
+      WHERE id = search_record.id;
+
+      -- Send email notification
+      IF search_record.notify_email THEN
+        -- Use your email notification system here
+        -- This is a placeholder for the actual implementation
+        PERFORM 1;
+      END IF;
+
+      -- Send push notification
+      IF search_record.notify_push THEN
+        -- Use your push notification system here
+        -- This is a placeholder for the actual implementation
+        PERFORM 1;
+      END IF;
+    END IF;
+  END LOOP;
+END;
+$$;
+
+-- Function to toggle saved search alerts
+CREATE OR REPLACE FUNCTION toggle_saved_search_alert(
+  search_id uuid,
+  enable boolean DEFAULT true,
+  frequency text DEFAULT 'daily'
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if the user owns the saved search
+  IF NOT EXISTS (
+    SELECT 1 FROM saved_searches
+    WHERE id = search_id
+    AND user_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'Not authorized to modify this saved search';
+  END IF;
+
+  -- Update the saved search
+  UPDATE saved_searches
+  SET
+    alert_enabled = enable,
+    alert_frequency = frequency,
+    last_alert_sent = CASE WHEN enable THEN NULL ELSE last_alert_sent END
+  WHERE id = search_id;
+END;
+$$;
+
+-- Function to get saved searches with extra info about alerts
+CREATE OR REPLACE FUNCTION get_saved_searches_with_alerts()
+RETURNS TABLE (
+  id uuid,
+  name text,
+  query text,
+  filters jsonb,
+  notify_email boolean,
+  notify_push boolean,
+  alert_enabled boolean,
+  alert_frequency text,
+  created_at timestamptz,
+  match_count bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ss.id,
+    ss.name,
+    ss.query,
+    ss.filters,
+    ss.notify_email,
+    ss.notify_push,
+    ss.alert_enabled,
+    ss.alert_frequency,
+    ss.created_at,
+    (SELECT count(*) FROM get_saved_search_matches(ss.id))
+  FROM saved_searches ss
+  WHERE ss.user_id = auth.uid()
+  ORDER BY ss.created_at DESC;
+END;
+$$;
+
+================
+File: supabase/migrations/20250302163455_get_saved_searches_with_alerts.sql
+================
+-- Fix for the ambiguous "id" column error
+-- Drop the existing function if it exists
+DROP FUNCTION IF EXISTS get_saved_searches_with_alerts();
+
+-- Create the updated function with explicit column references
+CREATE OR REPLACE FUNCTION get_saved_searches_with_alerts()
+RETURNS TABLE (
+  id uuid,
+  name text,
+  query text,
+  filters jsonb,
+  notify_email boolean,
+  notify_push boolean,
+  alert_enabled boolean,
+  alert_frequency text,
+  created_at timestamptz,
+  match_count bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ss.id,
+    ss.name,
+    ss.query,
+    ss.filters,
+    ss.notify_email,
+    ss.notify_push,
+    ss.alert_enabled,
+    ss.alert_frequency,
+    ss.created_at,
+    (SELECT count(*) FROM get_saved_search_matches(ss.id))
+  FROM saved_searches ss
+  WHERE ss.user_id = auth.uid()
+  ORDER BY ss.created_at DESC;
+END;
+$$;
+
+================
+File: supabase/migrations/20250302164205_get_saved_search_matches.sql
+================
+-- First, fix get_saved_search_matches function which is causing issues
+
+DROP FUNCTION IF EXISTS get_saved_search_matches(uuid, timestamptz);
+
+CREATE OR REPLACE FUNCTION get_saved_search_matches(
+  search_id uuid,
+  since_timestamp timestamptz DEFAULT NULL
+)
+RETURNS TABLE (
+  item_id uuid,
+  item_title text,
+  item_price decimal,
+  item_condition text,
+  item_images text[],
+  item_created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  search_record record;
+  query_condition text := '';
+  filter_conditions text := '';
+BEGIN
+  -- Get the saved search
+  SELECT * INTO search_record FROM saved_searches WHERE saved_searches.id = search_id;
+
+  -- If no search found, return empty set
+  IF search_record IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Build the query condition for text search
+  IF search_record.query != '' THEN
+    query_condition := format(
+      'AND (items.title ILIKE %L OR items.description ILIKE %L)',
+      '%' || search_record.query || '%',
+      '%' || search_record.query || '%'
+    );
+  END IF;
+
+  -- Build filter conditions from JSON
+  IF search_record.filters ? 'category' AND search_record.filters->>'category' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.category_id = (SELECT categories.id FROM categories WHERE categories.slug = %L)',
+      search_record.filters->>'category'
+    );
+  END IF;
+
+  IF search_record.filters ? 'minPrice' AND search_record.filters->>'minPrice' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.price >= %s',
+      search_record.filters->>'minPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'maxPrice' AND search_record.filters->>'maxPrice' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.price <= %s',
+      search_record.filters->>'maxPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'condition' AND search_record.filters->>'condition' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.condition = %L',
+      search_record.filters->>'condition'
+    );
+  END IF;
+
+  -- Add timestamp condition if provided
+  IF since_timestamp IS NOT NULL THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.created_at > %L',
+      since_timestamp
+    );
+  END IF;
+
+  -- Build and execute the final query with explicitly named return columns
+  RETURN QUERY EXECUTE format(
+    'SELECT
+       items.id AS item_id,
+       items.title AS item_title,
+       items.price AS item_price,
+       items.condition AS item_condition,
+       items.images AS item_images,
+       items.created_at AS item_created_at
+     FROM items
+     WHERE items.is_active = true %s %s
+     ORDER BY items.created_at DESC',
+    query_condition,
+    filter_conditions
+  );
+END;
+$$;
+
+-- Now fix the get_saved_searches_with_alerts function
+DROP FUNCTION IF EXISTS get_saved_searches_with_alerts();
+
+CREATE OR REPLACE FUNCTION get_saved_searches_with_alerts()
+RETURNS TABLE (
+  id uuid,
+  name text,
+  query text,
+  filters jsonb,
+  notify_email boolean,
+  notify_push boolean,
+  alert_enabled boolean,
+  alert_frequency text,
+  created_at timestamptz,
+  match_count bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ss.id,
+    ss.name,
+    ss.query,
+    ss.filters,
+    ss.notify_email,
+    ss.notify_push,
+    ss.alert_enabled,
+    ss.alert_frequency,
+    ss.created_at,
+    (SELECT count(*) FROM get_saved_search_matches(ss.id)) AS match_count
+  FROM saved_searches ss
+  WHERE ss.user_id = auth.uid()
+  ORDER BY ss.created_at DESC;
+END;
+$$;
+
+================
+File: supabase/migrations/20250302164428_get_saved_search_matches.sql
+================
+-- Fix get_saved_search_matches function preserving original column names
+
+DROP FUNCTION IF EXISTS get_saved_search_matches(uuid, timestamptz);
+
+CREATE OR REPLACE FUNCTION get_saved_search_matches(
+  search_id uuid,
+  since_timestamp timestamptz DEFAULT NULL
+)
+RETURNS TABLE (
+  id uuid,
+  title text,
+  price decimal,
+  condition text,
+  images text[],
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  search_record record;
+  query_condition text := '';
+  filter_conditions text := '';
+BEGIN
+  -- Get the saved search
+  SELECT * INTO search_record FROM saved_searches WHERE saved_searches.id = search_id;
+
+  -- If no search found, return empty set
+  IF search_record IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Build the query condition for text search
+  IF search_record.query != '' THEN
+    query_condition := format(
+      'AND (items.title ILIKE %L OR items.description ILIKE %L)',
+      '%' || search_record.query || '%',
+      '%' || search_record.query || '%'
+    );
+  END IF;
+
+  -- Build filter conditions from JSON
+  IF search_record.filters ? 'category' AND search_record.filters->>'category' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.category_id = (SELECT categories.id FROM categories WHERE categories.slug = %L)',
+      search_record.filters->>'category'
+    );
+  END IF;
+
+  IF search_record.filters ? 'minPrice' AND search_record.filters->>'minPrice' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.price >= %s',
+      search_record.filters->>'minPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'maxPrice' AND search_record.filters->>'maxPrice' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.price <= %s',
+      search_record.filters->>'maxPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'condition' AND search_record.filters->>'condition' != '' THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.condition = %L',
+      search_record.filters->>'condition'
+    );
+  END IF;
+
+  -- Add timestamp condition if provided
+  IF since_timestamp IS NOT NULL THEN
+    filter_conditions := filter_conditions || format(
+      ' AND items.created_at > %L',
+      since_timestamp
+    );
+  END IF;
+
+  -- Build and execute the final query - keeping original column names but making references explicit
+  RETURN QUERY EXECUTE format(
+    'SELECT
+       items.id AS id,
+       items.title AS title,
+       items.price AS price,
+       items.condition AS condition,
+       items.images AS images,
+       items.created_at AS created_at
+     FROM items
+     WHERE items.is_active = true %s %s
+     ORDER BY items.created_at DESC',
+    query_condition,
+    filter_conditions
+  );
+END;
+$$;
+
+-- Fix the get_saved_searches_with_alerts function
+DROP FUNCTION IF EXISTS get_saved_searches_with_alerts();
+
+CREATE OR REPLACE FUNCTION get_saved_searches_with_alerts()
+RETURNS TABLE (
+  id uuid,
+  name text,
+  query text,
+  filters jsonb,
+  notify_email boolean,
+  notify_push boolean,
+  alert_enabled boolean,
+  alert_frequency text,
+  created_at timestamptz,
+  match_count bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ss.id,
+    ss.name,
+    ss.query,
+    ss.filters,
+    ss.notify_email,
+    ss.notify_push,
+    ss.alert_enabled,
+    ss.alert_frequency,
+    ss.created_at,
+    (SELECT count(*) FROM get_saved_search_matches(ss.id)) AS match_count
+  FROM saved_searches ss
+  WHERE ss.user_id = auth.uid()
+  ORDER BY ss.created_at DESC;
+END;
+$$;
+
+================
+File: supabase/migrations/20250302164909_get_saved_search_matches.sql
+================
+-- Drop existing functions
+DROP FUNCTION IF EXISTS get_saved_search_matches(uuid, timestamptz);
+DROP FUNCTION IF EXISTS get_saved_searches_with_alerts();
+
+-- Create a simpler function to count matching items
+CREATE OR REPLACE FUNCTION count_matching_items(
+  search_query text DEFAULT '',
+  search_filters jsonb DEFAULT '{}'::jsonb,
+  since_time timestamptz DEFAULT NULL
+)
+RETURNS bigint
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  total_count bigint;
+  query_text text := 'SELECT COUNT(*) FROM items WHERE is_active = true';
+BEGIN
+  -- Add query condition
+  IF search_query != '' THEN
+    query_text := query_text || format(
+      ' AND (title ILIKE %L OR description ILIKE %L)',
+      '%' || search_query || '%',
+      '%' || search_query || '%'
+    );
+  END IF;
+
+  -- Add category filter
+  IF search_filters ? 'category' AND search_filters->>'category' != '' THEN
+    query_text := query_text || format(
+      ' AND category_id = (SELECT id FROM categories WHERE slug = %L)',
+      search_filters->>'category'
+    );
+  END IF;
+
+  -- Add price filters
+  IF search_filters ? 'minPrice' AND search_filters->>'minPrice' != '' THEN
+    query_text := query_text || format(
+      ' AND price >= %s',
+      search_filters->>'minPrice'
+    );
+  END IF;
+
+  IF search_filters ? 'maxPrice' AND search_filters->>'maxPrice' != '' THEN
+    query_text := query_text || format(
+      ' AND price <= %s',
+      search_filters->>'maxPrice'
+    );
+  END IF;
+
+  -- Add condition filter
+  IF search_filters ? 'condition' AND search_filters->>'condition' != '' THEN
+    query_text := query_text || format(
+      ' AND condition = %L',
+      search_filters->>'condition'
+    );
+  END IF;
+
+  -- Add time filter if provided
+  IF since_time IS NOT NULL THEN
+    query_text := query_text || format(
+      ' AND created_at > %L',
+      since_time
+    );
+  END IF;
+
+  -- Execute the query
+  EXECUTE query_text INTO total_count;
+  RETURN total_count;
+END;
+$$;
+
+-- Create the get_saved_searches_with_alerts function - simpler version
+CREATE OR REPLACE FUNCTION get_saved_searches_with_alerts()
+RETURNS TABLE (
+  id uuid,
+  name text,
+  query text,
+  filters jsonb,
+  notify_email boolean,
+  notify_push boolean,
+  alert_enabled boolean,
+  alert_frequency text,
+  created_at timestamptz,
+  match_count bigint
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT
+    ss.id,
+    ss.name,
+    ss.query,
+    ss.filters,
+    ss.notify_email,
+    ss.notify_push,
+    ss.alert_enabled,
+    ss.alert_frequency,
+    ss.created_at,
+    count_matching_items(ss.query, ss.filters) AS match_count
+  FROM saved_searches ss
+  WHERE ss.user_id = auth.uid()
+  ORDER BY ss.created_at DESC;
+$$;
+
+-- Create a function to get matching items without dynamic SQL
+CREATE OR REPLACE FUNCTION get_matching_items(
+  search_id uuid,
+  max_results integer DEFAULT 50,
+  since_time timestamptz DEFAULT NULL
+)
+RETURNS SETOF items
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  search_record record;
+  query_text text;
+BEGIN
+  -- Get the saved search
+  SELECT * INTO search_record FROM saved_searches WHERE id = search_id;
+
+  -- If no search found, return empty set
+  IF search_record IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Start building the query
+  query_text := 'SELECT * FROM items WHERE is_active = true';
+
+  -- Add query condition
+  IF search_record.query != '' THEN
+    query_text := query_text || format(
+      ' AND (title ILIKE %L OR description ILIKE %L)',
+      '%' || search_record.query || '%',
+      '%' || search_record.query || '%'
+    );
+  END IF;
+
+  -- Add category filter
+  IF search_record.filters ? 'category' AND search_record.filters->>'category' != '' THEN
+    query_text := query_text || format(
+      ' AND category_id = (SELECT id FROM categories WHERE slug = %L)',
+      search_record.filters->>'category'
+    );
+  END IF;
+
+  -- Add price filters
+  IF search_record.filters ? 'minPrice' AND search_record.filters->>'minPrice' != '' THEN
+    query_text := query_text || format(
+      ' AND price >= %s',
+      search_record.filters->>'minPrice'
+    );
+  END IF;
+
+  IF search_record.filters ? 'maxPrice' AND search_record.filters->>'maxPrice' != '' THEN
+    query_text := query_text || format(
+      ' AND price <= %s',
+      search_record.filters->>'maxPrice'
+    );
+  END IF;
+
+  -- Add condition filter
+  IF search_record.filters ? 'condition' AND search_record.filters->>'condition' != '' THEN
+    query_text := query_text || format(
+      ' AND condition = %L',
+      search_record.filters->>'condition'
+    );
+  END IF;
+
+  -- Add time filter if provided
+  IF since_time IS NOT NULL THEN
+    query_text := query_text || format(
+      ' AND created_at > %L',
+      since_time
+    );
+  END IF;
+
+  -- Add order and limit
+  query_text := query_text || format(
+    ' ORDER BY created_at DESC LIMIT %s',
+    max_results
+  );
+
+  -- Return the query results
+  RETURN QUERY EXECUTE query_text;
+END;
+$$;
+
+================
 File: supabase/.gitignore
 ================
 # Supabase
@@ -10145,22 +13846,23 @@ File: package.json
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.7",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.3.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.22.2",
-    "date-fns": "^3.3.1",
     "react-hook-form": "^7.51.0",
-    "zustand": "^4.5.2",
-    "clsx": "^2.1.0",
+    "react-router-dom": "^6.22.2",
+    "recharts": "^2.15.1",
     "tailwind-merge": "^2.2.1",
-    "lodash": "^4.17.21"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@types/lodash": "^4.14.202",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
-    "@types/lodash": "^4.14.202",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "eslint": "^9.9.1",
@@ -10184,6 +13886,235 @@ export default {
     autoprefixer: {},
   },
 };
+
+================
+File: README-New-Features.md
+================
+# Treasure Trove New Features Documentation
+
+This document outlines the new features added to the Treasure Trove marketplace application and provides implementation details for each feature.
+
+## Table of Contents
+
+1. [Wish Lists](#wish-lists)
+2. [Price Drop Alerts](#price-drop-alerts)
+3. [Back-in-Stock Notifications](#back-in-stock-notifications)
+4. [Favorite Searches with New Item Alerts](#favorite-searches-with-new-item-alerts)
+5. [Scheduled Tasks](#scheduled-tasks)
+
+---
+
+## Wish Lists
+
+### Description
+The Wish List feature allows users to save items they're interested in to a dedicated wishlist for easier access in the future.
+
+### Implementation Details
+
+#### Database Tables
+- `wish_list_items`: Stores the relationship between users and their saved items
+  - `id`: UUID primary key
+  - `user_id`: Reference to user profile
+  - `item_id`: Reference to saved item
+  - `added_at`: Timestamp when item was added to wishlist
+
+#### Components
+- `WishListButton`: A reusable button component that toggles an item's presence in the user's wishlist
+- `WishlistCount`: Displays the count of items in wishlist with a badge in the navbar
+- `Wishlist`: Page component that displays all items in a user's wishlist
+
+#### Functions
+- `add_to_wishlist`: Database function to add an item to a user's wishlist
+- `remove_from_wishlist`: Database function to remove an item from a user's wishlist
+- `is_in_wishlist`: Database function to check if an item is in a user's wishlist
+- `get_wishlist_items`: Database function to retrieve a user's wishlist items
+
+### Usage
+Users can:
+- Add/remove items from their wishlist with a single click
+- View their wishlist count in the navigation bar
+- Access their full wishlist from the user dropdown menu
+- Remove items from the wishlist page
+
+---
+
+## Price Drop Alerts
+
+### Description
+Price Drop Alerts allow users to set alerts for items they're interested in and receive notifications when the price drops.
+
+### Implementation Details
+
+#### Database Tables
+- `price_history`: Tracks price changes for items
+  - `id`: UUID primary key
+  - `item_id`: Reference to the item
+  - `old_price`: Previous price
+  - `new_price`: Updated price
+  - `changed_at`: Timestamp of the price change
+- `price_alerts`: Stores user price alert preferences
+  - `id`: UUID primary key
+  - `user_id`: Reference to user profile
+  - `item_id`: Reference to the item
+  - `target_price`: Optional target price (alert triggers when price drops to or below this value)
+  - `notify_email`, `notify_push`: Notification preferences
+  - `last_notified_at`: Timestamp of last notification
+
+#### Components
+- `PriceAlertButton`: A button component that allows users to set and configure price alerts
+- `PriceHistory`: Displays the price history of an item with a chart
+- `PriceAlerts`: Page component that displays all of a user's price alerts
+
+#### Functions
+- `toggle_price_alert`: Database function to create or remove a price alert
+- `has_price_alert`: Database function to check if a user has set a price alert for an item
+- `get_price_alerts`: Database function to retrieve a user's price alerts
+- `track_price_change`: Trigger function that records price changes
+- `process_price_drop_notifications`: Database function that processes and sends price drop notifications
+
+### Usage
+Users can:
+- Set price alerts with custom target prices
+- Choose notification preferences (email, push)
+- View price history with a visual chart
+- Manage all their price alerts in one place
+
+---
+
+## Back-in-Stock Notifications
+
+### Description
+Back-in-Stock Notifications allow users to get alerts when out-of-stock items become available again.
+
+### Implementation Details
+
+#### Database Tables
+- `stock_history`: Tracks stock status changes for items
+  - `id`: UUID primary key
+  - `item_id`: Reference to the item
+  - `old_status`: Previous stock status
+  - `new_status`: Updated stock status
+  - `changed_at`: Timestamp of the status change
+- `stock_alerts`: Stores user stock alert preferences
+  - `id`: UUID primary key
+  - `user_id`: Reference to user profile
+  - `item_id`: Reference to the item
+  - `notify_email`, `notify_push`: Notification preferences
+  - `last_notified_at`: Timestamp of last notification
+  
+#### Components
+- `StockAlertButton`: A button component for setting stock alerts on out-of-stock items
+- `StockStatus`: Displays the current stock status of an item
+- `UpdateStockStatus`: Interface for sellers to update item stock status
+- `StockAlerts`: Page component that displays all of a user's stock alerts
+
+#### Functions
+- `toggle_stock_alert`: Database function to create or remove a stock alert
+- `has_stock_alert`: Database function to check if a user has set a stock alert for an item
+- `get_stock_alerts`: Database function to retrieve a user's stock alerts
+- `track_stock_change`: Trigger function that records stock status changes
+- `process_stock_notifications`: Database function that processes and sends back-in-stock notifications
+- `update_item_stock_status`: Database function for sellers to update item stock status
+
+### Usage
+Users can:
+- Set alerts for out-of-stock items
+- Choose notification preferences (email, push)
+- Manage all their stock alerts in one place
+- Sellers can update the stock status of their items
+
+---
+
+## Favorite Searches with New Item Alerts
+
+### Description
+This feature allows users to save their search queries and filters, and optionally receive alerts when new items matching their criteria are listed.
+
+### Implementation Details
+
+#### Database Tables
+- Enhanced `saved_searches` table with new fields:
+  - `alert_enabled`: Boolean flag to enable/disable alerts
+  - `alert_frequency`: How often to check for new items ('daily', 'weekly', 'instant')
+  - `last_alert_sent`: Timestamp of the last alert
+
+#### Components
+- `EnhancedSavedSearches`: An improved version of the saved searches component with alert capabilities
+- `SavedSearchAlerts`: Page component that displays all saved searches with alert configuration
+
+#### Functions
+- `get_saved_search_matches`: Database function to find items that match a saved search
+- `process_saved_search_alerts`: Database function that processes and sends alerts for new matching items
+- `toggle_saved_search_alert`: Database function to enable/disable alerts and set frequency
+- `get_saved_searches_with_alerts`: Database function to retrieve saved searches with alert information
+
+### Usage
+Users can:
+- Save search criteria with a single click
+- Enable alerts for saved searches to be notified of new matching items
+- Configure alert frequency (daily, weekly)
+- Manage all their saved searches and alerts in one place
+
+---
+
+## Scheduled Tasks
+
+### Description
+A Supabase Edge Function that runs on a schedule to process various notifications and alerts.
+
+### Implementation Details
+
+#### Components
+- `scheduled-tasks.ts`: A Supabase Edge Function that processes all notification types
+
+#### Setup
+1. Create the Edge Function in your Supabase project
+2. Set up a CRON job to run the function on a schedule (e.g., daily at midnight)
+3. Configure environment variables for Supabase access
+
+#### Features Processed
+- Price drop notifications
+- Back-in-stock notifications
+- Saved search alerts
+
+### Integration Notes
+- All notification processing is done server-side to ensure reliability
+- The function uses the Supabase service role for administrative access
+- Error handling ensures that failures in one notification type don't affect others
+
+---
+
+## Installation Instructions
+
+### Database Migrations
+Run the following SQL migrations in order:
+1. `wishlist_migration.sql`
+2. `price_alerts_migration.sql`
+3. `stock_alerts_migration.sql`
+4. `search_alerts_migration.sql`
+
+### Frontend Integration
+1. Add all new components to your project
+2. Update existing components as specified in the implementation
+3. Add new routes to App.tsx
+4. Update the navigation to include links to new features
+
+### Scheduled Tasks
+1. Deploy the edge function to your Supabase project
+2. Set up a CRON job to run daily (recommended: midnight)
+3. Verify that notifications are being processed correctly
+
+---
+
+## Testing
+
+After implementation, test the following user flows:
+1. Add and remove items from wishlist
+2. Set price alerts with different target prices
+3. Set stock alerts for out-of-stock items
+4. Save searches and configure alerts
+5. Verify that sellers can update stock status
+6. Simulate price drops, stock changes, and new items to test notifications
 
 ================
 File: README.md
