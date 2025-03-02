@@ -1,0 +1,5489 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+================================================================
+File Summary
+================================================================
+
+Purpose:
+--------
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+
+File Format:
+------------
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Multiple file entries, each consisting of:
+  a. A separator line (================)
+  b. The file path (File: path/to/file)
+  c. Another separator line
+  d. The full contents of the file
+  e. A blank line
+
+Usage Guidelines:
+-----------------
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+
+Notes:
+------
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+
+Additional Info:
+----------------
+
+================================================================
+Directory Structure
+================================================================
+.bolt/
+  config.json
+  prompt
+public/
+  sw.js
+src/
+  components/
+    ui/
+      Toaster.tsx
+    Footer.tsx
+    Navbar.tsx
+  contexts/
+    AuthContext.tsx
+  hooks/
+    useAnalytics.ts
+  lib/
+    pushNotifications.ts
+    supabase.ts
+  pages/
+    Admin.tsx
+    Auth.tsx
+    Browse.tsx
+    CreateListing.tsx
+    Home.tsx
+    ItemDetails.tsx
+    Messages.tsx
+    Notifications.tsx
+    Profile.tsx
+    Settings.tsx
+  App.tsx
+  index.css
+  main.tsx
+  vite-env.d.ts
+supabase/
+  migrations/
+    20250225220246_foggy_sun.sql
+    20250225221149_precious_plain.sql
+    20250225221437_golden_sun.sql
+    20250225221859_rustic_valley.sql
+    20250225222005_foggy_stream.sql
+    20250225225931_divine_haze.sql
+    20250225230737_light_salad.sql
+    20250225230929_noisy_wind.sql
+    20250225231227_dry_spire.sql
+    20250225231551_sweet_sunset.sql
+    20250225231924_aged_bonus.sql
+    20250225232013_bronze_jungle.sql
+    20250225232303_mellow_bird.sql
+    20250225232443_little_trail.sql
+    20250225232719_flat_bridge.sql
+.gitignore
+eslint.config.js
+index.html
+package.json
+postcss.config.js
+README.md
+tailwind.config.js
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+
+================================================================
+Files
+================================================================
+
+================
+File: .bolt/config.json
+================
+{
+  "template": "bolt-vite-react-ts"
+}
+
+================
+File: .bolt/prompt
+================
+For all designs I ask you to make, have them be beautiful, not cookie cutter. Make webpages that are fully featured and worthy for production.
+
+By default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
+
+Use icons from lucide-react for logos.
+
+Use stock photos from unsplash where appropriate, only valid URLs you know exist. Do not download the images, only link to them in image tags.
+
+================
+File: public/sw.js
+================
+self.addEventListener('push', event => {
+  const data = event.data.json();
+  
+  self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: '/icon.png',
+    badge: '/badge.png',
+    data: data.url
+  });
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data)
+  );
+});
+
+================
+File: src/components/ui/Toaster.tsx
+================
+import React from 'react';
+
+export function Toaster() {
+  return (
+    <div
+      id="toast-container"
+      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+      aria-live="polite"
+    />
+  );
+}
+
+================
+File: src/components/Footer.tsx
+================
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+export function Footer() {
+  return (
+    <footer className="bg-white border-t mt-auto">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">About Treasure Trove</h3>
+            <p className="text-gray-600">
+              Your trusted marketplace for buying and selling pre-loved treasures.
+            </p>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/browse" className="text-gray-600 hover:text-indigo-600">
+                  Browse Items
+                </Link>
+              </li>
+              <li>
+                <Link to="/create-listing" className="text-gray-600 hover:text-indigo-600">
+                  Sell an Item
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Help & Support</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/faq" className="text-gray-600 hover:text-indigo-600">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-gray-600 hover:text-indigo-600">
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/privacy" className="text-gray-600 hover:text-indigo-600">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-gray-600 hover:text-indigo-600">
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border-t mt-8 pt-8 text-center text-gray-600">
+          <p>© {new Date().getFullYear()} Treasure Trove. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+================
+File: src/components/Navbar.tsx
+================
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Bell, MessageSquare, PlusCircle, User, Settings, Shield } from 'lucide-react';
+
+export function Navbar() {
+  const { user, signOut } = useAuth();
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  async function checkAdminStatus() {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user!.id)
+        .single();
+
+      if (error) throw error;
+      setIsAdmin(profile?.role === 'admin' || profile?.role === 'super_admin');
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  }
+
+  return (
+    <nav className="bg-white shadow-lg">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="text-2xl font-bold text-indigo-600">Treasure Trove</span>
+          </Link>
+
+          <div className="flex items-center space-x-4">
+            <Link to="/browse" className="text-gray-700 hover:text-indigo-600">
+              Browse
+            </Link>
+            
+            {user ? (
+              <>
+                <Link
+                  to="/create-listing"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-1"
+                >
+                  <PlusCircle size={18} />
+                  <span>Sell Item</span>
+                </Link>
+
+                <Link to="/notifications" className="text-gray-700 hover:text-indigo-600">
+                  <Bell size={20} />
+                </Link>
+
+                <Link to="/messages" className="text-gray-700 hover:text-indigo-600">
+                  <MessageSquare size={20} />
+                </Link>
+
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 focus:outline-none"
+                  >
+                    <User size={20} />
+                  </button>
+                  
+                  {showDropdown && (
+                    <div className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-lg shadow-xl z-50">
+                      <Link
+                        to={`/profile/${user.id}`}
+                        onClick={() => setShowDropdown(false)}
+                        className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        to="/settings"
+                        onClick={() => setShowDropdown(false)}
+                        className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Settings size={16} />
+                          Settings
+                        </div>
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setShowDropdown(false)}
+                          className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Shield size={16} />
+                            Admin Panel
+                          </div>
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => {
+                          signOut();
+                          setShowDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+================
+File: src/contexts/AuthContext.tsx
+================
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, options?: { data: { username: string } }) => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for changes on auth state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string, options?: { data: { username: string } }) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: options?.data
+      }
+    });
+    if (error) throw error;
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+================
+File: src/hooks/useAnalytics.ts
+================
+import { useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+
+export function useProfileViews(profileId: string) {
+  useEffect(() => {
+    if (!profileId) return;
+
+    supabase.rpc('track_profile_view', {
+      viewed_profile_id: profileId
+    });
+  }, [profileId]);
+}
+
+export function useItemViews(itemId: string) {
+  useEffect(() => {
+    if (!itemId) return;
+
+    supabase.rpc('track_item_view', {
+      viewed_item_id: itemId
+    });
+  }, [itemId]);
+}
+
+================
+File: src/lib/pushNotifications.ts
+================
+import { supabase } from './supabase';
+
+const publicVapidKey = 'YOUR_PUBLIC_VAPID_KEY'; // You'll need to set this up with web-push
+
+export async function subscribeToPushNotifications() {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('Push notifications are not supported');
+    }
+
+    // Register service worker
+    const registration = await navigator.serviceWorker.register('/sw.js');
+
+    // Subscribe to push notifications
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: publicVapidKey
+    });
+
+    // Save subscription to database
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .insert({
+        endpoint: subscription.endpoint,
+        auth: subscription.keys?.auth || '',
+        p256dh: subscription.keys?.p256dh || ''
+      });
+
+    if (error) throw error;
+
+    return true;
+  } catch (error) {
+    console.error('Error subscribing to push notifications:', error);
+    return false;
+  }
+}
+
+================
+File: src/lib/supabase.ts
+================
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '../types/supabase';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+================
+File: src/pages/Admin.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Shield, UserPlus, UserMinus, Search, AlertTriangle } from 'lucide-react';
+
+interface AdminUser {
+  id: string;
+  username: string;
+  full_name: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+interface AdminLog {
+  id: string;
+  admin: {
+    username: string;
+  };
+  action: string;
+  details: any;
+  created_at: string;
+}
+
+export function Admin() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [logs, setLogs] = useState<AdminLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUsers();
+      fetchLogs();
+    }
+  }, [isAdmin]);
+
+  async function checkAdminStatus() {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
+      const isSuperAdmin = profile.role === 'super_admin';
+
+      setIsAdmin(isAdmin);
+      setIsSuperAdmin(isSuperAdmin);
+
+      if (!isAdmin) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      navigate('/');
+    }
+  }
+
+  async function fetchUsers() {
+    try {
+      setError('');
+      
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Get auth users data using the secure function
+      const { data: authUsers, error: authError } = await supabase
+        .rpc('get_auth_users');
+
+      if (authError) throw authError;
+
+      // Combine the data
+      const usersWithEmail = profiles?.map(profile => {
+        const authUser = authUsers?.find(user => user.id === profile.id);
+        return {
+          ...profile,
+          email: authUser?.email || 'N/A'
+        };
+      });
+
+      setUsers(usersWithEmail || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError('Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchLogs() {
+    try {
+      const { data, error } = await supabase
+        .from('admin_logs')
+        .select(`
+          id,
+          admin:profiles!admin_logs_admin_id_fkey(username),
+          action,
+          details,
+          created_at
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setLogs(data);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    }
+  }
+
+  async function handlePromoteToAdmin(userId: string) {
+    try {
+      setError('');
+      const { error } = await supabase.rpc('promote_to_admin', {
+        user_id: userId
+      });
+
+      if (error) throw error;
+      fetchUsers();
+      fetchLogs();
+    } catch (error) {
+      console.error('Error promoting user:', error);
+      setError('Failed to promote user to admin');
+    }
+  }
+
+  async function handleRevokeAdmin(userId: string) {
+    try {
+      setError('');
+      const { error } = await supabase.rpc('revoke_admin', {
+        user_id: userId
+      });
+
+      if (error) throw error;
+      fetchUsers();
+      fetchLogs();
+    } catch (error) {
+      console.error('Error revoking admin:', error);
+      setError('Failed to revoke admin privileges');
+    }
+  }
+
+  const filteredUsers = users.filter(user =>
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.full_name && user.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Shield className="text-indigo-600" />
+          Admin Dashboard
+        </h1>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 flex items-center gap-2">
+          <AlertTriangle size={20} />
+          {error}
+        </div>
+      )}
+
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Users Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                User
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Joined
+              </th>
+              {isSuperAdmin && (
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredUsers.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <img
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`}
+                      alt={user.username}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {user.username}
+                      </div>
+                      {user.full_name && (
+                        <div className="text-sm text-gray-500">
+                          {user.full_name}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {user.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    user.role === 'super_admin'
+                      ? 'bg-purple-100 text-purple-800'
+                      : user.role === 'admin'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {user.role}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(user.created_at).toLocaleDateString()}
+                </td>
+                {isSuperAdmin && (
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {user.role === 'user' ? (
+                      <button
+                        onClick={() => handlePromoteToAdmin(user.id)}
+                        className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1 ml-auto"
+                      >
+                        <UserPlus size={16} />
+                        Make Admin
+                      </button>
+                    ) : user.role === 'admin' ? (
+                      <button
+                        onClick={() => handleRevokeAdmin(user.id)}
+                        className="text-red-600 hover:text-red-900 flex items-center gap-1 ml-auto"
+                      >
+                        <UserMinus size={16} />
+                        Revoke Admin
+                      </button>
+                    ) : null}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Admin Logs */}
+      <h2 className="text-2xl font-bold mb-4">Recent Activity</h2>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="flow-root">
+          <ul className="divide-y divide-gray-200">
+            {logs.map((log) => (
+              <li key={log.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${log.admin.username}`}
+                      alt={log.admin.username}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      {log.admin.username}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {log.action.replace(/_/g, ' ')} - 
+                      {JSON.stringify(log.details)}
+                    </p>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {new Date(log.created_at).toLocaleString()}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+================
+File: src/pages/Auth.tsx
+================
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { User, ShoppingBag } from 'lucide-react';
+
+export function Auth() {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [isSeller, setIsSeller] = useState(false);
+  const [error, setError] = useState('');
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      if (isSignUp) {
+        await signUp(email, password, { 
+          data: { 
+            username: username || `user_${Math.random().toString(36).slice(2, 10)}`,
+            is_seller: isSeller
+          }
+        });
+      } else {
+        await signIn(email, password);
+      }
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
+      <h2 className="text-2xl font-bold text-center mb-6">
+        {isSignUp ? 'Create an Account' : 'Sign In'}
+      </h2>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {isSignUp && (
+          <>
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                placeholder="Choose a username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Would you like to sell items?
+              </label>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={isSeller}
+                    onChange={(e) => setIsSeller(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">Enable Seller Features</p>
+                    <p className="text-sm text-gray-500">
+                      You can buy items by default. Check this to also list items for sale.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          {isSignUp ? 'Sign Up' : 'Sign In'}
+        </button>
+      </form>
+
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="text-sm text-indigo-600 hover:text-indigo-500"
+        >
+          {isSignUp
+            ? 'Already have an account? Sign in'
+            : "Don't have an account? Sign up"}
+        </button>
+      </div>
+
+      {isSignUp && (
+        <div className="mt-6 bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+          <h3 className="font-medium text-gray-900 mb-2">Account Features</h3>
+          <ul className="space-y-2">
+            <li className="flex items-center gap-2">
+              <ShoppingBag size={16} />
+              Buy items from sellers
+            </li>
+            <li className="flex items-center gap-2">
+              <User size={16} />
+              Create a profile
+            </li>
+            {isSeller && (
+              <li className="flex items-center gap-2 text-indigo-600">
+                <Package size={16} />
+                List items for sale
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
+File: src/pages/Browse.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Item {
+  id: string;
+  title: string;
+  price: number;
+  condition: string;
+  images: string[];
+  created_at: string;
+  seller: {
+    username: string;
+    rating: number;
+  };
+}
+
+export function Browse() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [items, setItems] = useState<Item[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    category: searchParams.get('category') || '',
+    minPrice: searchParams.get('minPrice') || '',
+    maxPrice: searchParams.get('maxPrice') || '',
+    condition: searchParams.get('condition') || '',
+    sort: searchParams.get('sort') || 'newest'
+  });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      fetchItems();
+    }
+  }, [filters, categories]);
+
+  async function fetchCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name, slug')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  }
+
+  async function fetchItems() {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          price,
+          condition,
+          images,
+          created_at,
+          seller:seller_id (
+            username,
+            rating
+          )
+        `)
+        .eq('is_active', true);
+
+      if (filters.category) {
+        const category = categories.find(c => c.slug === filters.category);
+        if (category) {
+          query = query.eq('category_id', category.id);
+        }
+      }
+      if (filters.minPrice) {
+        query = query.gte('price', parseFloat(filters.minPrice));
+      }
+      if (filters.maxPrice) {
+        query = query.lte('price', parseFloat(filters.maxPrice));
+      }
+      if (filters.condition) {
+        query = query.eq('condition', filters.condition);
+      }
+
+      switch (filters.sort) {
+        case 'price-asc':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-desc':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleFilterChange(key: string, value: string) {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setSearchParams(prev => {
+      if (value) {
+        prev.set(key, value);
+      } else {
+        prev.delete(key);
+      }
+      return prev;
+    });
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Search and Filter Header */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search items..."
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+          />
+        </div>
+        
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
+        >
+          <SlidersHorizontal size={20} />
+          Filters
+        </button>
+      </div>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category
+              </label>
+              <select
+                value={filters.category}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
+                className="w-full border rounded-lg p-2"
+              >
+                <option value="">All Categories</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Price Range
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={filters.minPrice}
+                  onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                  className="w-full border rounded-lg p-2"
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={filters.maxPrice}
+                  onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                  className="w-full border rounded-lg p-2"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Condition
+              </label>
+              <select
+                value={filters.condition}
+                onChange={(e) => handleFilterChange('condition', e.target.value)}
+                className="w-full border rounded-lg p-2"
+              >
+                <option value="">Any Condition</option>
+                <option value="new">New</option>
+                <option value="like_new">Like New</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sort By
+              </label>
+              <select
+                value={filters.sort}
+                onChange={(e) => handleFilterChange('sort', e.target.value)}
+                className="w-full border rounded-lg p-2"
+              >
+                <option value="newest">Newest First</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={() => {
+                setFilters({
+                  category: '',
+                  minPrice: '',
+                  maxPrice: '',
+                  condition: '',
+                  sort: 'newest'
+                });
+                setSearchParams({});
+              }}
+              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+            >
+              <X size={16} />
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Items Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="aspect-square bg-gray-200 animate-pulse" />
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : items.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {items.map((item) => (
+            <a
+              key={item.id}
+              href={`/items/${item.id}`}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            >
+              <div className="aspect-square relative">
+                <img
+                  src={item.images[0] || 'https://via.placeholder.com/400'}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-sm font-medium">
+                  ${item.price}
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1 truncate">
+                  {item.title}
+                </h3>
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>{item.condition}</span>
+                  <span>★ {item.seller.rating}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-600">No items found matching your criteria.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
+File: src/pages/CreateListing.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Upload, X, ImageIcon } from 'lucide-react';
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface Profile {
+  id: string;
+  username: string;
+}
+
+export function CreateListing() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    price: '',
+    condition: '',
+    category_id: '',
+    selling_method: 'fixed',
+    location: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+      fetchCategories();
+    } else {
+      navigate('/auth');
+    }
+  }, [user]);
+
+  async function fetchProfile() {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('id', user!.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      // If no profile exists, create one
+      if ((error as any).code === 'PGRST116') {
+        await createProfile();
+      }
+    }
+  }
+
+  async function createProfile() {
+    try {
+      const username = `user_${Math.random().toString(36).slice(2, 10)}`;
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: user!.id,
+          username,
+          full_name: '',
+          is_seller: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      navigate('/auth');
+    }
+  }
+
+  async function fetchCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  }
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    const remainingSlots = 5 - images.length;
+    const newImages = [...images, ...files.slice(0, remainingSlots)];
+    setImages(newImages);
+
+    // Create preview URLs
+    const newImageUrls = newImages.map(file => URL.createObjectURL(file));
+    setImageUrls(newImageUrls);
+  }
+
+  function removeImage(index: number) {
+    const newImages = images.filter((_, i) => i !== index);
+    const newImageUrls = imageUrls.filter((_, i) => i !== index);
+    
+    // Revoke the old URL to prevent memory leaks
+    URL.revokeObjectURL(imageUrls[index]);
+    
+    setImages(newImages);
+    setImageUrls(newImageUrls);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user || !profile) return;
+
+    try {
+      setLoading(true);
+
+      // Upload images to storage
+      const uploadedImageUrls = await Promise.all(
+        images.map(async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `items/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('items')
+            .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('items')
+            .getPublicUrl(filePath);
+
+          return publicUrl;
+        })
+      );
+
+      // Create item
+      const { error: insertError } = await supabase
+        .from('items')
+        .insert({
+          ...formData,
+          price: parseFloat(formData.price),
+          seller_id: user.id,
+          images: uploadedImageUrls,
+          is_active: true
+        });
+
+      if (insertError) throw insertError;
+
+      navigate('/profile/' + user.id);
+    } catch (error) {
+      console.error('Error creating listing:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!profile) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Setting up your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Create New Listing</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Images */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Images (up to 5)
+            </label>
+            <div className="grid grid-cols-5 gap-4">
+              {imageUrls.map((url, index) => (
+                <div key={index} className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+              {Array.from({ length: Math.max(0, 5 - imageUrls.length) }).map((_, index) => (
+                <label
+                  key={`empty-${index}`}
+                  className={`aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 transition-colors ${
+                    index === 0 && imageUrls.length === 0
+                      ? 'border-indigo-500'
+                      : 'border-gray-300'
+                  }`}
+                >
+                  {index === 0 && imageUrls.length === 0 ? (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-indigo-500 mb-2" />
+                      <span className="text-sm text-indigo-600 text-center px-2">
+                        Add main photo
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-gray-400" />
+                      <span className="text-xs text-gray-500 mt-1">Add photo</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="mt-2 text-sm text-gray-500">
+              First image will be the main photo. Add up to 5 photos.
+            </p>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Title
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              }
+              className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, description: e.target.value }))
+              }
+              rows={4}
+              className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* Price and Category */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="price"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Price
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  $
+                </span>
+                <input
+                  type="number"
+                  id="price"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, price: e.target.value }))
+                  }
+                  className="w-full pl-8 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="category"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Category
+              </label>
+              <select
+                id="category"
+                value={formData.category_id}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, category_id: e.target.value }))
+                }
+                className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Condition and Selling Method */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="condition"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Condition
+              </label>
+              <select
+                id="condition"
+                value={formData.condition}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, condition: e.target.value }))
+                }
+                className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select condition</option>
+                <option value="new">New</option>
+                <option value="like_new">Like New</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="selling_method"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Selling Method
+              </label>
+              <select
+                id="selling_method"
+                value={formData.selling_method}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    selling_method: e.target.value }))
+                }
+                className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+              >
+                <option value="fixed">Fixed Price</option>
+                <option value="negotiation">Accept Offers</option>
+                <option value="auction">Auction</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Location
+            </label>
+            <input
+              type="text"
+              id="location"
+              value={formData.location}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, location: e.target.value }))
+              }
+              className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading || images.length === 0}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Creating Listing...' : 'Create Listing'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+================
+File: src/pages/Home.tsx
+================
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Search, Tag, ShieldCheck, TrendingUp } from 'lucide-react';
+
+export function Home() {
+  const featuredCategories = [
+    { name: 'Furniture', image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=600' },
+    { name: 'Electronics', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=600' },
+    { name: 'Home Decor', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=600' },
+    { name: 'Kitchen', image: 'https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&q=80&w=600' }
+  ];
+
+  return (
+    <div className="space-y-16">
+      {/* Hero Section */}
+      <section className="relative h-[500px] flex items-center">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1529720317453-c8da503f2051?auto=format&fit=crop&q=80&w=2000"
+            alt="Treasure Trove Hero"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-50" />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-2xl text-white">
+            <h1 className="text-5xl font-bold mb-6">
+              Discover Unique Treasures for Your Home
+            </h1>
+            <p className="text-xl mb-8">
+              Buy and sell pre-loved items in your community. Find great deals or
+              give your items a second life.
+            </p>
+            <div className="flex gap-4">
+              <Link
+                to="/browse"
+                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition"
+              >
+                Start Browsing
+              </Link>
+              <Link
+                to="/create-listing"
+                className="bg-white text-indigo-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition"
+              >
+                Sell an Item
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Easy to Browse</h3>
+            <p className="text-gray-600">
+              Find exactly what you're looking for with our powerful search and filter system.
+            </p>
+          </div>
+          
+          <div className="text-center">
+            <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Tag className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Great Deals</h3>
+            <p className="text-gray-600">
+              Get the best prices on quality pre-loved items from trusted sellers.
+            </p>
+          </div>
+          
+          <div className="text-center">
+            <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Secure Transactions</h3>
+            <p className="text-gray-600">
+              Shop with confidence using our secure payment and escrow system.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Categories */}
+      <section className="container mx-auto px-4">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold">Featured Categories</h2>
+          <Link to="/browse" className="text-indigo-600 hover:text-indigo-700">
+            View All Categories →
+          </Link>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {featuredCategories.map((category) => (
+            <Link
+              key={category.name}
+              to={`/browse?category=${category.name.toLowerCase()}`}
+              className="group relative h-64 overflow-hidden rounded-lg"
+            >
+              <img
+                src={category.image}
+                alt={category.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <h3 className="absolute bottom-4 left-4 text-xl font-semibold text-white">
+                {category.name}
+              </h3>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Trending Items */}
+      <section className="container mx-auto px-4 pb-16">
+        <div className="flex items-center gap-2 mb-8">
+          <TrendingUp className="w-6 h-6 text-indigo-600" />
+          <h2 className="text-3xl font-bold">Trending Now</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Placeholder for trending items - will be populated from the database */}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="aspect-square bg-gray-200 animate-pulse" />
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="h-4 bg-gray-200 rounded animate-pulse w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+================
+File: src/pages/ItemDetails.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { MessageSquare, Heart, Share2, AlertTriangle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { useItemViews } from '../hooks/useAnalytics';
+
+interface Item {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  condition: string;
+  selling_method: string;
+  images: string[];
+  created_at: string;
+  views: number;
+  seller: {
+    id: string;
+    username: string;
+    rating: number;
+    total_ratings: number;
+  };
+}
+
+export function ItemDetails() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [item, setItem] = useState<Item | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [offerAmount, setOfferAmount] = useState('');
+  const [showOfferForm, setShowOfferForm] = useState(false);
+  const [error, setError] = useState('');
+  const [viewerCount, setViewerCount] = useState(0);
+
+  // Track item views
+  useItemViews(id!);
+
+  useEffect(() => {
+    if (id) {
+      fetchItem();
+      fetchViewerCount();
+    }
+  }, [id]);
+
+  async function fetchItem() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('items')
+        .select(`
+          *,
+          seller:seller_id (
+            id,
+            username,
+            rating,
+            total_ratings
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setItem(data);
+    } catch (error) {
+      console.error('Error fetching item:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchViewerCount() {
+    try {
+      const { data, error } = await supabase.rpc('get_unique_item_viewers', {
+        item_id: id
+      });
+
+      if (error) throw error;
+      setViewerCount(data || 0);
+    } catch (error) {
+      console.error('Error fetching viewer count:', error);
+    }
+  }
+
+  async function handleMakeOffer() {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setError('');
+      const { error } = await supabase
+        .from('offers')
+        .insert({
+          item_id: id,
+          buyer_id: user.id,
+          amount: parseFloat(offerAmount),
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      // Create notification for seller
+      await supabase.rpc('create_notification', {
+        user_id: item?.seller.id,
+        title: 'New Offer',
+        content: `You received a new offer of $${offerAmount} for "${item?.title}"`
+      });
+
+      setShowOfferForm(false);
+      setOfferAmount('');
+    } catch (error) {
+      console.error('Error making offer:', error);
+      setError('Failed to submit offer. Please try again.');
+    }
+  }
+
+  async function handleContactSeller() {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setError('');
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          receiver_id: item?.seller.id,
+          item_id: id,
+          content: `Hi, I'm interested in "${item?.title}"`
+        });
+
+      if (error) throw error;
+      navigate('/messages');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setError('Failed to send message. Please try again.');
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-96 bg-gray-200 rounded-lg mb-8" />
+          <div className="h-8 bg-gray-200 rounded mb-4" />
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-8" />
+          <div className="h-24 bg-gray-200 rounded mb-8" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!item) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Item Not Found</h2>
+        <p className="text-gray-600 mb-4">
+          The item you're looking for might have been removed or doesn't exist.
+        </p>
+        <button
+          onClick={() => navigate('/browse')}
+          className="text-indigo-600 hover:text-indigo-700"
+        >
+          Browse Other Items →
+        </button>
+      </div>
+    );
+  }
+
+  const isOwnItem = user?.id === item.seller.id;
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 flex items-center gap-2">
+          <AlertTriangle size={20} />
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Images */}
+        <div>
+          <div className="aspect-square rounded-lg overflow-hidden mb-4">
+            <img
+              src={item.images[selectedImage] || 'https://via.placeholder.com/800'}
+              alt={item.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {item.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-4">
+              {item.images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`aspect-square rounded-lg overflow-hidden ${
+                    selectedImage === index
+                      ? 'ring-2 ring-indigo-500'
+                      : 'opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${item.title} - Image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Details */}
+        <div>
+          <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
+          <div className="flex items-center gap-4 mb-2">
+            <span className="text-2xl font-bold">${item.price}</span>
+            <span className="text-gray-600">
+              Condition: {item.condition.replace('_', ' ')}
+            </span>
+          </div>
+          <div className="text-gray-600 mb-6">
+            {item.views} views • {viewerCount} unique visitors
+          </div>
+
+          <div className="prose max-w-none mb-8">
+            <p>{item.description}</p>
+          </div>
+
+          <div className="flex items-center gap-4 mb-8">
+            <img
+              src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.seller.username}`}
+              alt={item.seller.username}
+              className="w-12 h-12 rounded-full"
+            />
+            <div>
+              <p className="font-medium">{item.seller.username}</p>
+              <p className="text-sm text-gray-600">
+                ★ {item.seller.rating} ({item.seller.total_ratings} ratings)
+              </p>
+            </div>
+          </div>
+
+          {!isOwnItem ? (
+            <div className="space-y-4">
+              {item.selling_method === 'fixed' ? (
+                <button
+                  onClick={handleContactSeller}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+                >
+                  Buy Now
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowOfferForm(!showOfferForm)}
+                    className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+                  >
+                    Make an Offer
+                  </button>
+                  {showOfferForm && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <input
+                        type="number"
+                        value={offerAmount}
+                        onChange={(e) => setOfferAmount(e.target.value)}
+                        placeholder="Enter your offer amount"
+                        className="w-full mb-2 p-2 border rounded"
+                      />
+                      <button
+                        onClick={handleMakeOffer}
+                        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                      >
+                        Submit Offer
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <button
+                onClick={handleContactSeller}
+                className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={20} />
+                Contact Seller
+              </button>
+
+              <div className="flex gap-4">
+                <button className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                  <Heart size={20} />
+                  Save
+                </button>
+                <button className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                  <Share2 size={20} />
+                  Share
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 p-4 rounded-lg text-center">
+              <p className="text-gray-600">This is your item listing</p>
+              <button
+                onClick={() => navigate('/messages')}
+                className="mt-2 text-indigo-600 hover:text-indigo-700"
+              >
+                View Messages →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+================
+File: src/pages/Messages.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Send } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface Message {
+  id: string;
+  content: string;
+  created_at: string;
+  sender_id: string;
+  receiver_id: string;
+  item_id: string | null;
+  sender: {
+    username: string;
+  };
+  item?: {
+    title: string;
+    images: string[];
+  };
+}
+
+interface Conversation {
+  user_id: string;
+  username: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
+}
+
+export function Messages() {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchConversations();
+      const subscription = supabase
+        .channel('messages')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${user.id}`,
+        }, (payload) => {
+          handleNewMessage(payload.new as Message);
+        })
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      fetchMessages(selectedUser);
+      markMessagesAsRead(selectedUser);
+    }
+  }, [selectedUser]);
+
+  async function fetchConversations() {
+    try {
+      const { data, error } = await supabase.rpc('get_conversations', {
+        user_id: user!.id
+      });
+
+      if (error) throw error;
+      setConversations(data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    }
+  }
+
+  async function fetchMessages(otherUserId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:sender_id(username),
+          item:item_id(title, images)
+        `)
+        .or(`sender_id.eq.${user!.id},receiver_id.eq.${user!.id}`)
+        .or(`sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId}`)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  }
+
+  async function markMessagesAsRead(senderId: string) {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('sender_id', senderId)
+        .eq('receiver_id', user!.id)
+        .eq('read', false);
+
+      if (error) throw error;
+      fetchConversations();
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  }
+
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedUser) return;
+
+    try {
+      const { error } = await supabase.from('messages').insert({
+        content: newMessage.trim(),
+        sender_id: user!.id,
+        receiver_id: selectedUser
+      });
+
+      if (error) throw error;
+      setNewMessage('');
+      fetchMessages(selectedUser);
+      fetchConversations();
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }
+
+  function handleNewMessage(message: Message) {
+    if (selectedUser === message.sender_id) {
+      setMessages(prev => [...prev, message]);
+    }
+    fetchConversations();
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="grid grid-cols-12 min-h-[600px]">
+          {/* Conversations List */}
+          <div className="col-span-4 border-r">
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-semibold">Messages</h2>
+            </div>
+            <div className="overflow-y-auto h-[calc(600px-4rem)]">
+              {loading ? (
+                <div className="p-4 space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-12 bg-gray-200 rounded" />
+                    </div>
+                  ))}
+                </div>
+              ) : conversations.length > 0 ? (
+                conversations.map((conversation) => (
+                  <button
+                    key={conversation.user_id}
+                    onClick={() => setSelectedUser(conversation.user_id)}
+                    className={`w-full p-4 text-left hover:bg-gray-50 ${
+                      selectedUser === conversation.user_id ? 'bg-gray-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${conversation.username}`}
+                        alt={conversation.username}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium truncate">
+                            {conversation.username}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {format(new Date(conversation.last_message_time), 'MMM d')}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-500 truncate">
+                          {conversation.last_message}
+                        </p>
+                      </div>
+                      {conversation.unread_count > 0 && (
+                        <span className="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                          {conversation.unread_count}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  No conversations yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="col-span-8 flex flex-col">
+            {selectedUser ? (
+              <>
+                <div className="p-4 border-b">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${
+                        conversations.find(c => c.user_id === selectedUser)?.username
+                      }`}
+                      alt="User avatar"
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <h3 className="font-medium">
+                      {conversations.find(c => c.user_id === selectedUser)?.username}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.map((message) => {
+                    const isOwn = message.sender_id === user!.id;
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] ${
+                            isOwn
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          } rounded-lg px-4 py-2`}
+                        >
+                          {message.item && (
+                            <div className="mb-2 p-2 bg-white/10 rounded">
+                              <div className="flex items-center gap-2">
+                                {message.item.images?.[0] && (
+                                  <img
+                                    src={message.item.images[0]}
+                                    alt={message.item.title}
+                                    className="w-10 h-10 object-cover rounded"
+                                  />
+                                )}
+                                <p className="text-sm">{message.item.title}</p>
+                              </div>
+                            </div>
+                          )}
+                          <p>{message.content}</p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              isOwn ? 'text-white/70' : 'text-gray-500'
+                            }`}
+                          >
+                            {format(new Date(message.created_at), 'HH:mm')}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <form onSubmit={handleSendMessage} className="p-4 border-t">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700"
+                    >
+                      <Send size={20} />
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gray-500">
+                Select a conversation to start messaging
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+================
+File: src/pages/Notifications.tsx
+================
+import React from 'react';
+
+export function Notifications() {
+  return (
+    <div>
+      <h1>Notifications</h1>
+      {/* Implementation coming soon */}
+    </div>
+  );
+}
+
+================
+File: src/pages/Profile.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Star, MessageSquare, Package, Settings, ShoppingBag, Heart } from 'lucide-react';
+import { useProfileViews } from '../hooks/useAnalytics';
+
+interface Profile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  bio: string;
+  rating: number;
+  total_ratings: number;
+  is_seller: boolean;
+  created_at: string;
+}
+
+interface Item {
+  id: string;
+  title: string;
+  price: number;
+  condition: string;
+  images: string[];
+  created_at: string;
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  reviewer: {
+    username: string;
+  };
+}
+
+interface Transaction {
+  id: string;
+  item: {
+    id: string;
+    title: string;
+    price: number;
+    images: string[];
+  };
+  seller: {
+    username: string;
+  };
+  status: string;
+  created_at: string;
+}
+
+export function Profile() {
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [purchases, setPurchases] = useState<Transaction[]>([]);
+  const [activeTab, setActiveTab] = useState<'items' | 'reviews' | 'purchases'>('items');
+  const [loading, setLoading] = useState(true);
+  const isOwnProfile = user?.id === id;
+
+  // Track profile views
+  useProfileViews(id!);
+
+  useEffect(() => {
+    if (id) {
+      fetchProfile();
+      fetchItems();
+      fetchReviews();
+      if (isOwnProfile) {
+        fetchPurchases();
+      }
+    }
+  }, [id]);
+
+  async function fetchProfile() {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchItems() {
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .eq('seller_id', id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    }
+  }
+
+  async function fetchReviews() {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          reviewer:reviewer_id(username)
+        `)
+        .eq('reviewed_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setReviews(data || []);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  }
+
+  async function fetchPurchases() {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          item:item_id(
+            id,
+            title,
+            price,
+            images
+          ),
+          seller:seller_id(
+            username
+          )
+        `)
+        .eq('buyer_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPurchases(data || []);
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-40 bg-gray-200 rounded-lg mb-8" />
+          <div className="h-8 bg-gray-200 rounded mb-4 w-1/4" />
+          <div className="h-4 bg-gray-200 rounded mb-8 w-1/2" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Profile Not Found</h2>
+        <p className="text-gray-600">
+          The profile you're looking for might have been removed or doesn't exist.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Profile Header */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 h-32" />
+        <div className="px-6 py-4">
+          <div className="flex items-start">
+            <img
+              src={profile.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.username}`}
+              alt={profile.username}
+              className="w-24 h-24 rounded-full border-4 border-white -mt-12"
+            />
+            <div className="ml-4 flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">{profile.username}</h1>
+                  {profile.full_name && (
+                    <p className="text-gray-600">{profile.full_name}</p>
+                  )}
+                </div>
+                {isOwnProfile ? (
+                  <Link
+                    to="/settings"
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+                  >
+                    <Settings size={18} />
+                    Edit Profile
+                  </Link>
+                ) : (
+                  <Link
+                    to={`/messages?user=${id}`}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                  >
+                    <MessageSquare size={18} />
+                    Send Message
+                  </Link>
+                )}
+              </div>
+              {profile.bio && (
+                <p className="text-gray-600 mt-2">{profile.bio}</p>
+              )}
+              <div className="flex items-center gap-6 mt-4">
+                <div className="flex items-center gap-1">
+                  <Star className="text-yellow-400" size={20} />
+                  <span className="font-medium">{profile.rating}</span>
+                  <span className="text-gray-500">
+                    ({profile.total_ratings} reviews)
+                  </span>
+                </div>
+                {profile.is_seller ? (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <Package size={20} />
+                    <span>{items.length} items</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <ShoppingBag size={20} />
+                    <span>Buyer</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6">
+        {profile.is_seller && (
+          <button
+            onClick={() => setActiveTab('items')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'items'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Items
+          </button>
+        )}
+        <button
+          onClick={() => setActiveTab('reviews')}
+          className={`px-4 py-2 rounded-lg ${
+            activeTab === 'reviews'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Reviews
+        </button>
+        {isOwnProfile && (
+          <button
+            onClick={() => setActiveTab('purchases')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'purchases'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Purchases
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
+      {activeTab === 'items' && profile.is_seller && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((item) => (
+            <Link
+              key={item.id}
+              to={`/items/${item.id}`}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            >
+              <div className="aspect-square relative">
+                <img
+                  src={item.images[0] || 'https://via.placeholder.com/400'}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded-full text-sm font-medium">
+                  ${item.price}
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-1 truncate">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-gray-600">{item.condition}</p>
+              </div>
+            </Link>
+          ))}
+          {items.length === 0 && (
+            <div className="col-span-full text-center py-12 text-gray-500">
+              No items listed yet
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'reviews' && (
+        <div className="space-y-6">
+          {reviews.map((review) => (
+            <div key={review.id} className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <img
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${review.reviewer.username}`}
+                  alt={review.reviewer.username}
+                  className="w-12 h-12 rounded-full"
+                />
+                <div>
+                  <p className="font-medium">{review.reviewer.username}</p>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={16}
+                        className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600">{review.comment}</p>
+            </div>
+          ))}
+          {reviews.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              No reviews yet
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'purchases' && isOwnProfile && (
+        <div className="space-y-6">
+          {purchases.map((transaction) => (
+            <div key={transaction.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="flex items-center p-6">
+                <div className="w-24 h-24 rounded-lg overflow-hidden">
+                  <img
+                    src={transaction.item.images[0] || 'https://via.placeholder.com/400'}
+                    alt={transaction.item.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="ml-6 flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">
+                      {transaction.item.title}
+                    </h3>
+                    <span className="text-lg font-medium">
+                      ${transaction.item.price}
+                    </span>
+                  </div>
+                  <p className="text-gray-600 mt-1">
+                    Seller: {transaction.seller.username}
+                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      transaction.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : transaction.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                    </span>
+                    <div className="flex gap-2">
+                      <Link
+                        to={`/items/${transaction.item.id}`}
+                        className="text-indigo-600 hover:text-indigo-700 font-medium"
+                      >
+                        View Item
+                      </Link>
+                      <button className="text-gray-600 hover:text-gray-700">
+                        <Heart size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {purchases.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              No purchases yet
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
+File: src/pages/Settings.tsx
+================
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { Upload, Loader2 } from 'lucide-react';
+
+interface Profile {
+  username: string;
+  full_name: string;
+  bio: string;
+  avatar_url: string;
+}
+
+export function Settings() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [formData, setFormData] = useState<Profile>({
+    username: '',
+    full_name: '',
+    bio: '',
+    avatar_url: ''
+  });
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    fetchProfile();
+  }, [user]);
+
+  async function fetchProfile() {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, full_name, bio, avatar_url')
+        .eq('id', user!.id)
+        .single();
+
+      if (error) throw error;
+      
+      // Ensure bio is never null
+      setFormData({
+        ...data,
+        bio: data.bio || ''
+      });
+      setAvatarUrl(data.avatar_url || '');
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setLoading(false);
+    }
+  }
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatar(file);
+      setAvatarUrl(URL.createObjectURL(file));
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      setSaving(true);
+      setError('');
+
+      let avatarUrl = formData.avatar_url;
+
+      // Upload new avatar if selected
+      if (avatar) {
+        const fileExt = avatar.name.split('.').pop();
+        const fileName = `${user.id}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('items')
+          .upload(filePath, avatar, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('items')
+          .getPublicUrl(filePath);
+
+        avatarUrl = publicUrl;
+      }
+
+      // Update profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ...formData,
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      navigate(`/profile/${user.id}`);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError('Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto" />
+          <p className="mt-2 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Profile Picture
+            </label>
+            <div className="flex items-center gap-6">
+              <div className="relative w-32 h-32">
+                <img
+                  src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${formData.username}`}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover"
+                />
+                <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-50">
+                  <Upload className="w-5 h-5 text-gray-600" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>Upload a new profile picture</p>
+                <p>Recommended size: 400x400px</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Username */}
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={formData.username}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, username: e.target.value }))
+              }
+              className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* Full Name */}
+          <div>
+            <label
+              htmlFor="fullName"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              value={formData.full_name}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, full_name: e.target.value }))
+              }
+              className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label
+              htmlFor="bio"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Bio
+            </label>
+            <textarea
+              id="bio"
+              value={formData.bio}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, bio: e.target.value }))
+              }
+              rows={4}
+              className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Tell others about yourself..."
+            />
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/profile/${user!.id}`)}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+================
+File: src/App.tsx
+================
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+import { Home } from './pages/Home';
+import { Browse } from './pages/Browse';
+import { ItemDetails } from './pages/ItemDetails';
+import { Profile } from './pages/Profile';
+import { Settings } from './pages/Settings';
+import { Messages } from './pages/Messages';
+import { Notifications } from './pages/Notifications';
+import { Auth } from './pages/Auth';
+import { CreateListing } from './pages/CreateListing';
+import { Admin } from './pages/Admin';
+import { AuthProvider } from './contexts/AuthContext';
+import { Toaster } from './components/ui/Toaster';
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <main className="container mx-auto px-4 py-8">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/browse" element={<Browse />} />
+              <Route path="/items/:id" element={<ItemDetails />} />
+              <Route path="/profile/:id" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/create-listing" element={<CreateListing />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
+          </main>
+          <Footer />
+          <Toaster />
+        </div>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+export default App
+
+================
+File: src/index.css
+================
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+================
+File: src/main.tsx
+================
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+
+================
+File: src/vite-env.d.ts
+================
+/// <reference types="vite/client" />
+
+================
+File: supabase/migrations/20250225220246_foggy_sun.sql
+================
+/*
+  # Initial Schema for Treasure Trove
+
+  1. Tables
+    - profiles
+      - User profiles with ratings and metadata
+    - items
+      - Product listings with details and images
+    - categories
+      - Product categories
+    - transactions
+      - Transaction records
+    - reviews
+      - User reviews and ratings
+    - messages
+      - Chat messages between users
+    - offers
+      - Purchase offers and negotiations
+    - notifications
+      - System notifications
+
+  2. Security
+    - RLS policies for all tables
+    - Authentication using Supabase Auth
+
+  3. Enums
+    - item_condition
+    - selling_method
+    - transaction_status
+    - offer_status
+*/
+
+-- Enable necessary extensions
+create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
+
+-- Enums
+create type item_condition as enum ('new', 'like_new', 'good', 'fair', 'poor');
+create type selling_method as enum ('fixed', 'negotiation', 'auction');
+create type transaction_status as enum ('pending', 'processing', 'completed', 'disputed', 'cancelled');
+create type offer_status as enum ('pending', 'accepted', 'rejected', 'expired', 'countered');
+
+-- Profiles table
+create table profiles (
+  id uuid references auth.users on delete cascade primary key,
+  username text unique not null,
+  full_name text,
+  avatar_url text,
+  bio text,
+  rating decimal(3,2) default 0,
+  total_ratings int default 0,
+  is_seller boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Categories table
+create table categories (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  slug text unique not null,
+  description text,
+  parent_id uuid references categories(id),
+  created_at timestamptz default now()
+);
+
+-- Items table
+create table items (
+  id uuid primary key default uuid_generate_v4(),
+  seller_id uuid references profiles(id) on delete cascade not null,
+  title text not null,
+  description text,
+  condition item_condition not null,
+  price decimal(10,2),
+  selling_method selling_method not null,
+  category_id uuid references categories(id) not null,
+  images text[] not null default '{}',
+  location text,
+  is_active boolean default true,
+  views int default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  ends_at timestamptz -- for auctions
+);
+
+-- Transactions table
+create table transactions (
+  id uuid primary key default uuid_generate_v4(),
+  item_id uuid references items(id) not null,
+  buyer_id uuid references profiles(id) not null,
+  seller_id uuid references profiles(id) not null,
+  amount decimal(10,2) not null,
+  status transaction_status not null default 'pending',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Reviews table
+create table reviews (
+  id uuid primary key default uuid_generate_v4(),
+  transaction_id uuid references transactions(id) not null,
+  reviewer_id uuid references profiles(id) not null,
+  reviewed_id uuid references profiles(id) not null,
+  rating int check (rating >= 1 and rating <= 5) not null,
+  comment text,
+  created_at timestamptz default now()
+);
+
+-- Messages table
+create table messages (
+  id uuid primary key default uuid_generate_v4(),
+  sender_id uuid references profiles(id) not null,
+  receiver_id uuid references profiles(id) not null,
+  item_id uuid references items(id),
+  content text not null,
+  read boolean default false,
+  created_at timestamptz default now()
+);
+
+-- Offers table
+create table offers (
+  id uuid primary key default uuid_generate_v4(),
+  item_id uuid references items(id) not null,
+  buyer_id uuid references profiles(id) not null,
+  amount decimal(10,2) not null,
+  status offer_status not null default 'pending',
+  expires_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Notifications table
+create table notifications (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references profiles(id) not null,
+  title text not null,
+  content text not null,
+  read boolean default false,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table profiles enable row level security;
+alter table items enable row level security;
+alter table categories enable row level security;
+alter table transactions enable row level security;
+alter table reviews enable row level security;
+alter table messages enable row level security;
+alter table offers enable row level security;
+alter table notifications enable row level security;
+
+-- RLS Policies
+
+-- Profiles
+create policy "Public profiles are viewable by everyone"
+  on profiles for select
+  using (true);
+
+create policy "Users can update own profile"
+  on profiles for update
+  using (auth.uid() = id);
+
+-- Items
+create policy "Anyone can view active items"
+  on items for select
+  using (is_active = true);
+
+create policy "Sellers can manage their items"
+  on items for all
+  using (auth.uid() = seller_id);
+
+-- Categories
+create policy "Categories are viewable by everyone"
+  on categories for select
+  using (true);
+
+-- Transactions
+create policy "Users can view their transactions"
+  on transactions for select
+  using (auth.uid() in (buyer_id, seller_id));
+
+create policy "Buyers can create transactions"
+  on transactions for insert
+  with check (auth.uid() = buyer_id);
+
+-- Reviews
+create policy "Reviews are viewable by everyone"
+  on reviews for select
+  using (true);
+
+create policy "Users can create reviews for their transactions"
+  on reviews for insert
+  with check (
+    exists (
+      select 1 from transactions
+      where id = transaction_id
+      and (buyer_id = auth.uid() or seller_id = auth.uid())
+    )
+  );
+
+-- Messages
+create policy "Users can view their messages"
+  on messages for select
+  using (auth.uid() in (sender_id, receiver_id));
+
+create policy "Users can send messages"
+  on messages for insert
+  with check (auth.uid() = sender_id);
+
+-- Offers
+create policy "Users can view their offers"
+  on offers for select
+  using (
+    auth.uid() = buyer_id or
+    exists (
+      select 1 from items
+      where id = item_id and seller_id = auth.uid()
+    )
+  );
+
+create policy "Buyers can create offers"
+  on offers for insert
+  with check (auth.uid() = buyer_id);
+
+-- Notifications
+create policy "Users can view their notifications"
+  on notifications for select
+  using (auth.uid() = user_id);
+
+-- Functions and Triggers
+
+-- Function to update user rating
+create or replace function update_user_rating()
+returns trigger as $$
+begin
+  update profiles
+  set
+    rating = (
+      select avg(rating)::decimal(3,2)
+      from reviews
+      where reviewed_id = new.reviewed_id
+    ),
+    total_ratings = (
+      select count(*)
+      from reviews
+      where reviewed_id = new.reviewed_id
+    )
+  where id = new.reviewed_id;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger for updating user rating
+create trigger on_review_created
+  after insert on reviews
+  for each row
+  execute function update_user_rating();
+
+-- Function to create notification
+create or replace function create_notification(
+  user_id uuid,
+  title text,
+  content text
+) returns void as $$
+begin
+  insert into notifications (user_id, title, content)
+  values (user_id, title, content);
+end;
+$$ language plpgsql security definer;
+
+================
+File: supabase/migrations/20250225221149_precious_plain.sql
+================
+/*
+  # Create initial categories
+
+  1. Data
+    - Insert initial categories for the marketplace
+    - Categories: Furniture, Electronics, Home Decor, Kitchen
+*/
+
+-- Insert initial categories
+INSERT INTO categories (name, slug, description)
+VALUES 
+  ('Furniture', 'furniture', 'Home and office furniture'),
+  ('Electronics', 'electronics', 'Electronic devices and gadgets'),
+  ('Home Decor', 'home-decor', 'Decorative items for your home'),
+  ('Kitchen', 'kitchen', 'Kitchen appliances and accessories');
+
+================
+File: supabase/migrations/20250225221437_golden_sun.sql
+================
+/*
+  # Create get_conversations function
+
+  1. Function
+    - Creates a stored procedure to get user conversations
+    - Returns conversations with last message and unread count
+    - Orders by last message time
+*/
+
+create or replace function get_conversations(user_id uuid)
+returns table (
+  user_id uuid,
+  username text,
+  last_message text,
+  last_message_time timestamptz,
+  unread_count bigint
+) language sql security definer as $$
+  with conversations as (
+    select distinct
+      case
+        when sender_id = get_conversations.user_id then receiver_id
+        else sender_id
+      end as other_user_id,
+      first_value(content) over w as last_message,
+      first_value(created_at) over w as last_message_time,
+      count(*) filter (where receiver_id = get_conversations.user_id and read = false) over (partition by
+        case
+          when sender_id = get_conversations.user_id then receiver_id
+          else sender_id
+        end
+      ) as unread_count
+    from messages
+    where sender_id = get_conversations.user_id or receiver_id = get_conversations.user_id
+    window w as (
+      partition by
+        case
+          when sender_id = get_conversations.user_id then receiver_id
+          else sender_id
+        end
+      order by created_at desc
+    )
+  )
+  select distinct
+    c.other_user_id as user_id,
+    p.username,
+    c.last_message,
+    c.last_message_time,
+    c.unread_count
+  from conversations c
+  join profiles p on p.id = c.other_user_id
+  order by c.last_message_time desc;
+$$;
+
+================
+File: supabase/migrations/20250225221859_rustic_valley.sql
+================
+/*
+  # Create auth profile trigger
+
+  1. Function
+    - Creates a function to automatically create a profile when a user signs up
+    - Sets default values for required fields
+  
+  2. Trigger
+    - Adds trigger to create profile on user creation
+*/
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, username, full_name)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'username', 'user_' || substr(new.id::text, 1, 8)),
+    coalesce(new.raw_user_meta_data->>'full_name', '')
+  );
+  return new;
+end;
+$$;
+
+-- Enable realtime for profiles
+alter publication supabase_realtime add table profiles;
+
+-- Set up auth trigger
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+================
+File: supabase/migrations/20250225222005_foggy_stream.sql
+================
+/*
+  # Create storage bucket for item images
+
+  1. Storage
+    - Creates a public bucket for item images
+    - Sets up storage policies for authenticated users
+*/
+
+-- Create a public bucket for item images
+insert into storage.buckets (id, name, public)
+values ('items', 'items', true);
+
+-- Allow authenticated users to upload images
+create policy "Authenticated users can upload item images"
+on storage.objects for insert
+to authenticated
+with check (
+  bucket_id = 'items' and
+  (storage.foldername(name))[1] = 'items'
+);
+
+-- Allow anyone to download images
+create policy "Anyone can download item images"
+on storage.objects for select
+to public
+using (bucket_id = 'items');
+
+================
+File: supabase/migrations/20250225225931_divine_haze.sql
+================
+/*
+  # Add Admin Functionality
+
+  1. Changes
+    - Add admin role to profiles table
+    - Create admin logs table and policies
+    - Add admin management functions
+    - Add RLS policies for admin access
+
+  2. Security
+    - Enable RLS for admin_logs table
+    - Add policies for admin access
+    - Add secure functions for role management
+*/
+
+-- Add admin role to profiles
+alter table profiles 
+add column role text not null default 'user' 
+check (role in ('user', 'admin', 'super_admin'));
+
+-- Create admin logs table
+create table admin_logs (
+  id uuid primary key default uuid_generate_v4(),
+  admin_id uuid references profiles(id) not null,
+  action text not null,
+  details jsonb,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table admin_logs enable row level security;
+
+-- Admin policies
+create policy "Admins can view logs"
+  on admin_logs for select
+  to authenticated
+  using (exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ));
+
+create policy "Admins can create logs"
+  on admin_logs for insert
+  to authenticated
+  with check (
+    auth.uid() = admin_id
+    and exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  );
+
+-- Update profile policies for admin management
+create policy "Super admin can update admin roles"
+  on profiles for update
+  to authenticated
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role = 'super_admin'
+    )
+  )
+  with check (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role = 'super_admin'
+    )
+  );
+
+-- Admin management functions
+create or replace function promote_to_admin(user_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is a super admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role = 'super_admin'
+  ) then
+    raise exception 'Only super admin can promote users to admin';
+  end if;
+
+  -- Update the user's role to admin
+  update profiles
+  set role = 'admin'
+  where id = user_id
+  and role = 'user';
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'promote_to_admin',
+    jsonb_build_object('user_id', user_id)
+  );
+end;
+$$;
+
+create or replace function revoke_admin(user_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is a super admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role = 'super_admin'
+  ) then
+    raise exception 'Only super admin can revoke admin privileges';
+  end if;
+
+  -- Cannot revoke super admin
+  if exists (
+    select 1 from profiles
+    where id = user_id
+    and role = 'super_admin'
+  ) then
+    raise exception 'Cannot revoke super admin privileges';
+  end if;
+
+  -- Update the user's role to user
+  update profiles
+  set role = 'user'
+  where id = user_id
+  and role = 'admin';
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'revoke_admin',
+    jsonb_build_object('user_id', user_id)
+  );
+end;
+$$;
+
+-- Create function to create the first super admin
+create or replace function create_first_super_admin(
+  admin_email text,
+  admin_password text,
+  admin_username text
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  new_user_id uuid;
+begin
+  -- Check if super admin already exists
+  if exists (
+    select 1 from profiles where role = 'super_admin'
+  ) then
+    raise exception 'Super admin already exists';
+  end if;
+
+  -- Create auth user
+  insert into auth.users (
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_user_meta_data
+  ) values (
+    admin_email,
+    crypt(admin_password, gen_salt('bf')),
+    now(),
+    jsonb_build_object('username', admin_username, 'full_name', 'Super Admin')
+  )
+  returning id into new_user_id;
+
+  -- Update the profile to super admin
+  update profiles
+  set role = 'super_admin',
+      username = admin_username,
+      full_name = 'Super Admin',
+      is_seller = true
+  where id = new_user_id;
+end;
+$$;
+
+================
+File: supabase/migrations/20250225230737_light_salad.sql
+================
+/*
+  # Create First Super Admin
+
+  1. Changes
+    - Creates the first super admin user with:
+      - Email: admin@treasuretrove.com
+      - Password: admin123
+      - Username: superadmin
+    
+  2. Security
+    - Super admin has full access to admin functionality
+    - Only one super admin can be created
+*/
+
+-- Create the first super admin user
+do $$
+declare
+  new_user_id uuid := '00000000-0000-4000-a000-000000000000';
+begin
+  -- Check if super admin already exists
+  if exists (
+    select 1 from auth.users where id = new_user_id
+  ) then
+    raise exception 'Super admin already exists';
+  end if;
+
+  -- Create auth user
+  insert into auth.users (
+    id,
+    instance_id,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    last_sign_in_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token,
+    aud,
+    role
+  ) values (
+    new_user_id,
+    '00000000-0000-0000-0000-000000000000',
+    'admin@treasuretrove.com',
+    crypt('admin123', gen_salt('bf')),
+    now(),
+    jsonb_build_object('username', 'superadmin', 'full_name', 'Super Admin'),
+    now(),
+    now(),
+    now(),
+    '',
+    '',
+    '',
+    '',
+    'authenticated',
+    'authenticated'
+  );
+
+  -- Create super admin profile if it doesn't exist
+  insert into profiles (
+    id,
+    username,
+    full_name,
+    role,
+    is_seller
+  ) values (
+    new_user_id,
+    'superadmin',
+    'Super Admin',
+    'super_admin',
+    true
+  )
+  on conflict (id) do update
+  set role = 'super_admin',
+      username = 'superadmin',
+      full_name = 'Super Admin',
+      is_seller = true;
+end;
+$$;
+
+================
+File: supabase/migrations/20250225230929_noisy_wind.sql
+================
+/*
+  # Create secure function to access auth user emails
+
+  1. Changes
+    - Creates a secure function to access auth.users emails
+    - Function is only accessible to admins
+*/
+
+-- Create function to get auth user emails
+create or replace function get_auth_user_emails(user_ids uuid[])
+returns table (id uuid, email text)
+language sql
+security definer
+set search_path = public
+as $$
+  select id, email
+  from auth.users
+  where id = any(user_ids)
+  and exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  );
+$$;
+
+================
+File: supabase/migrations/20250225231227_dry_spire.sql
+================
+/*
+  # Add notifications and analytics features
+
+  1. Changes
+    - Add push notification subscription table
+    - Add profile views table
+    - Add item views table
+    - Add functions for tracking views
+    - Add realtime notifications
+
+  2. Security
+    - Enable RLS on new tables
+    - Add policies for view tracking
+*/
+
+-- Create push notification subscriptions table
+create table push_subscriptions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references profiles(id) on delete cascade not null,
+  endpoint text not null,
+  auth text not null,
+  p256dh text not null,
+  created_at timestamptz default now()
+);
+
+-- Create profile views table
+create table profile_views (
+  id uuid primary key default uuid_generate_v4(),
+  profile_id uuid references profiles(id) on delete cascade not null,
+  viewer_id uuid references profiles(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+-- Create item views table
+create table item_views (
+  id uuid primary key default uuid_generate_v4(),
+  item_id uuid references items(id) on delete cascade not null,
+  viewer_id uuid references profiles(id) on delete set null,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table push_subscriptions enable row level security;
+alter table profile_views enable row level security;
+alter table item_views enable row level security;
+
+-- RLS Policies
+
+-- Push subscriptions
+create policy "Users can manage their push subscriptions"
+  on push_subscriptions for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Profile views
+create policy "Anyone can create profile views"
+  on profile_views for insert
+  to authenticated
+  with check (true);
+
+create policy "Users can view their profile analytics"
+  on profile_views for select
+  using (auth.uid() = profile_id);
+
+-- Item views
+create policy "Anyone can create item views"
+  on item_views for insert
+  to authenticated
+  with check (true);
+
+create policy "Sellers can view their item analytics"
+  on item_views for select
+  using (
+    exists (
+      select 1 from items
+      where id = item_views.item_id
+      and seller_id = auth.uid()
+    )
+  );
+
+-- Functions
+
+-- Function to track profile view
+create or replace function track_profile_view(viewed_profile_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Only track if viewer is different from profile owner
+  if auth.uid() != viewed_profile_id then
+    insert into profile_views (profile_id, viewer_id)
+    values (viewed_profile_id, auth.uid());
+  end if;
+end;
+$$;
+
+-- Function to track item view
+create or replace function track_item_view(viewed_item_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  insert into item_views (item_id, viewer_id)
+  values (viewed_item_id, auth.uid());
+  
+  -- Update item view count
+  update items
+  set views = views + 1
+  where id = viewed_item_id;
+end;
+$$;
+
+-- Function to get unique profile viewers count
+create or replace function get_unique_profile_viewers(profile_id uuid)
+returns bigint
+language sql
+security definer
+as $$
+  select count(distinct viewer_id)
+  from profile_views
+  where profile_id = $1
+  and created_at > now() - interval '30 days';
+$$;
+
+-- Function to get unique item viewers count
+create or replace function get_unique_item_viewers(item_id uuid)
+returns bigint
+language sql
+security definer
+as $$
+  select count(distinct viewer_id)
+  from item_views
+  where item_id = $1
+  and created_at > now() - interval '30 days';
+$$;
+
+-- Enable realtime for notifications
+alter publication supabase_realtime add table messages;
+alter publication supabase_realtime add table notifications;
+
+================
+File: supabase/migrations/20250225231551_sweet_sunset.sql
+================
+/*
+  # Add seller restrictions
+
+  1. Changes
+    - Add validation functions for messages and reviews
+    - Add triggers to prevent self-messaging and self-rating
+    - Clean up any existing self-messages or self-ratings
+
+  2. Security
+    - Ensure data integrity with validation functions
+    - Prevent future self-interactions
+*/
+
+-- Clean up any existing self-messages
+delete from messages
+where sender_id = receiver_id;
+
+-- Clean up any existing self-reviews
+delete from reviews
+where reviewer_id = reviewed_id;
+
+-- Function to validate message creation
+create or replace function validate_message()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  -- Prevent self-messaging
+  if new.sender_id = new.receiver_id then
+    raise exception 'Cannot send message to yourself';
+  end if;
+
+  -- Check if trying to message about own item
+  if new.item_id is not null and exists (
+    select 1 from items
+    where id = new.item_id
+    and seller_id = new.sender_id
+  ) then
+    raise exception 'Cannot message about your own item';
+  end if;
+
+  return new;
+end;
+$$;
+
+-- Function to validate review creation
+create or replace function validate_review()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  -- Prevent self-review
+  if new.reviewer_id = new.reviewed_id then
+    raise exception 'Cannot review yourself';
+  end if;
+
+  -- Check if trying to review own transaction
+  if exists (
+    select 1 from transactions
+    where id = new.transaction_id
+    and (buyer_id = new.reviewer_id and seller_id = new.reviewed_id)
+    or (seller_id = new.reviewer_id and buyer_id = new.reviewed_id)
+  ) then
+    return new;
+  else
+    raise exception 'Can only review users you have transacted with';
+  end if;
+end;
+$$;
+
+-- Create triggers
+create trigger check_message_before_insert
+  before insert on messages
+  for each row
+  execute function validate_message();
+
+create trigger check_review_before_insert
+  before insert on reviews
+  for each row
+  execute function validate_review();
+
+================
+File: supabase/migrations/20250225231924_aged_bonus.sql
+================
+/*
+  # Update message and review validation
+
+  1. Changes
+    - Drop existing triggers if they exist
+    - Recreate validation functions with improved checks
+    - Recreate triggers for message and review validation
+
+  2. Security
+    - Prevent self-messaging and messaging about own items
+    - Prevent self-reviews
+    - Ensure reviews only come from transaction participants
+*/
+
+-- Drop existing triggers if they exist
+drop trigger if exists check_message_before_insert on messages;
+drop trigger if exists check_review_before_insert on reviews;
+
+-- Function to validate message creation
+create or replace function validate_message()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  -- Prevent self-messaging
+  if new.sender_id = new.receiver_id then
+    raise exception 'Cannot send message to yourself';
+  end if;
+
+  -- Check if trying to message about own item
+  if new.item_id is not null and exists (
+    select 1 from items
+    where id = new.item_id
+    and seller_id = new.sender_id
+  ) then
+    raise exception 'Cannot message about your own item';
+  end if;
+
+  return new;
+end;
+$$;
+
+-- Function to validate review creation
+create or replace function validate_review()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  -- Prevent self-review
+  if new.reviewer_id = new.reviewed_id then
+    raise exception 'Cannot review yourself';
+  end if;
+
+  -- Check if trying to review own transaction
+  if exists (
+    select 1 from transactions
+    where id = new.transaction_id
+    and (buyer_id = new.reviewer_id and seller_id = new.reviewed_id)
+    or (seller_id = new.reviewer_id and buyer_id = new.reviewed_id)
+  ) then
+    return new;
+  else
+    raise exception 'Can only review users you have transacted with';
+  end if;
+end;
+$$;
+
+-- Create triggers
+create trigger check_message_before_insert
+  before insert on messages
+  for each row
+  execute function validate_message();
+
+create trigger check_review_before_insert
+  before insert on reviews
+  for each row
+  execute function validate_review();
+
+================
+File: supabase/migrations/20250225232013_bronze_jungle.sql
+================
+/*
+  # Prevent self-offers
+
+  1. Changes
+    - Add validation function to prevent sellers from making offers on their own items
+    - Create trigger to enforce this validation
+
+  2. Security
+    - Prevent sellers from making offers on their own items
+    - Clean up any existing self-offers
+*/
+
+-- Clean up any existing self-offers
+delete from offers
+where exists (
+  select 1 from items
+  where items.id = offers.item_id
+  and items.seller_id = offers.buyer_id
+);
+
+-- Function to validate offer creation
+create or replace function validate_offer()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if trying to make an offer on own item
+  if exists (
+    select 1 from items
+    where id = new.item_id
+    and seller_id = new.buyer_id
+  ) then
+    raise exception 'Cannot make an offer on your own item';
+  end if;
+
+  return new;
+end;
+$$;
+
+-- Create trigger
+create trigger check_offer_before_insert
+  before insert on offers
+  for each row
+  execute function validate_offer();
+
+================
+File: supabase/migrations/20250225232303_mellow_bird.sql
+================
+/*
+  # Admin Features Enhancement
+
+  1. Changes
+    - Add featured and trending flags to items
+    - Add user status management
+    - Add category management functions for admins
+    - Add user management functions for admins
+
+  2. Security
+    - Only admins can manage categories
+    - Only admins can manage user statuses
+    - Only admins can set items as featured/trending
+*/
+
+-- Add status to profiles
+alter table profiles
+add column status text not null default 'active'
+check (status in ('active', 'suspended', 'deactivated'));
+
+-- Add featured and trending flags to items
+alter table items
+add column is_featured boolean not null default false,
+add column is_trending boolean not null default false;
+
+-- Function to manage user status
+create or replace function manage_user_status(
+  target_user_id uuid,
+  new_status text,
+  reason text default null
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is an admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can manage user status';
+  end if;
+
+  -- Update user status
+  update profiles
+  set status = new_status
+  where id = target_user_id;
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'update_user_status',
+    jsonb_build_object(
+      'user_id', target_user_id,
+      'new_status', new_status,
+      'reason', reason
+    )
+  );
+end;
+$$;
+
+-- Function to reset user password
+create or replace function admin_reset_password(
+  user_email text,
+  new_password text
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is an admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can reset passwords';
+  end if;
+
+  -- Update the password in auth.users
+  update auth.users
+  set encrypted_password = crypt(new_password, gen_salt('bf'))
+  where email = user_email;
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'reset_password',
+    jsonb_build_object('user_email', user_email)
+  );
+end;
+$$;
+
+-- Function to manage featured/trending items
+create or replace function manage_item_status(
+  item_id uuid,
+  set_featured boolean default null,
+  set_trending boolean default null
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is an admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can manage item status';
+  end if;
+
+  -- Update item status
+  update items
+  set 
+    is_featured = coalesce(set_featured, is_featured),
+    is_trending = coalesce(set_trending, is_trending)
+  where id = item_id;
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'update_item_status',
+    jsonb_build_object(
+      'item_id', item_id,
+      'featured', set_featured,
+      'trending', set_trending
+    )
+  );
+end;
+$$;
+
+-- Function to create category
+create or replace function create_category(
+  name text,
+  slug text,
+  description text default null,
+  parent_id uuid default null
+)
+returns uuid
+language plpgsql
+security definer
+as $$
+declare
+  new_category_id uuid;
+begin
+  -- Check if the executing user is an admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can create categories';
+  end if;
+
+  -- Insert new category
+  insert into categories (name, slug, description, parent_id)
+  values (name, slug, description, parent_id)
+  returning id into new_category_id;
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'create_category',
+    jsonb_build_object(
+      'category_id', new_category_id,
+      'name', name,
+      'slug', slug
+    )
+  );
+
+  return new_category_id;
+end;
+$$;
+
+-- Function to update category
+create or replace function update_category(
+  category_id uuid,
+  new_name text default null,
+  new_slug text default null,
+  new_description text default null,
+  new_parent_id uuid default null
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is an admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can update categories';
+  end if;
+
+  -- Update category
+  update categories
+  set
+    name = coalesce(new_name, name),
+    slug = coalesce(new_slug, slug),
+    description = coalesce(new_description, description),
+    parent_id = coalesce(new_parent_id, parent_id)
+  where id = category_id;
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'update_category',
+    jsonb_build_object(
+      'category_id', category_id,
+      'name', new_name,
+      'slug', new_slug
+    )
+  );
+end;
+$$;
+
+-- Function to delete category
+create or replace function delete_category(category_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Check if the executing user is an admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can delete categories';
+  end if;
+
+  -- Check if category has items
+  if exists (
+    select 1 from items
+    where category_id = delete_category.category_id
+  ) then
+    raise exception 'Cannot delete category with existing items';
+  end if;
+
+  -- Delete category
+  delete from categories
+  where id = category_id;
+
+  -- Log the action
+  insert into admin_logs (admin_id, action, details)
+  values (
+    auth.uid(),
+    'delete_category',
+    jsonb_build_object('category_id', category_id)
+  );
+end;
+$$;
+
+-- Update RLS policies for items to allow admin management
+create policy "Admins can manage all items"
+  on items for all
+  to authenticated
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  )
+  with check (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  );
+
+================
+File: supabase/migrations/20250225232443_little_trail.sql
+================
+/*
+  # Create Secure Auth Users Access Function
+
+  1. Changes
+    - Create a secure function for admin access to user emails
+    - Function returns only necessary user information
+    - Access restricted to admins only
+
+  2. Security
+    - Only admins can access the function
+    - Emails are only accessible through the function
+*/
+
+-- Create function to get auth user emails securely
+create or replace function get_auth_users()
+returns table (
+  id uuid,
+  email text,
+  created_at timestamptz,
+  last_sign_in_at timestamptz,
+  email_confirmed_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select 
+    au.id,
+    au.email,
+    au.created_at,
+    au.last_sign_in_at,
+    au.confirmed_at as email_confirmed_at
+  from auth.users au
+  where exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  );
+$$;
+
+================
+File: supabase/migrations/20250225232719_flat_bridge.sql
+================
+/*
+  # Add Escrow System
+
+  1. New Tables
+    - `escrow_transactions`
+      - Tracks escrow payments and status
+    - `escrow_disputes`
+      - Handles dispute cases
+    - `transaction_logs`
+      - Audit trail for all transaction events
+
+  2. Changes
+    - Add escrow status to transactions table
+    - Add dispute handling capabilities
+    - Add admin escrow management functions
+
+  3. Security
+    - Enable RLS on all new tables
+    - Add policies for buyers, sellers, and admins
+*/
+
+-- Add escrow status to transactions
+alter table transactions
+add column escrow_status text not null default 'pending'
+check (escrow_status in ('pending', 'funded', 'released', 'refunded', 'disputed'));
+
+-- Create escrow transactions table
+create table escrow_transactions (
+  id uuid primary key default uuid_generate_v4(),
+  transaction_id uuid references transactions(id) not null,
+  amount decimal(10,2) not null,
+  status text not null default 'pending'
+    check (status in ('pending', 'funded', 'released', 'refunded')),
+  funded_at timestamptz,
+  released_at timestamptz,
+  refunded_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Create escrow disputes table
+create table escrow_disputes (
+  id uuid primary key default uuid_generate_v4(),
+  transaction_id uuid references transactions(id) not null,
+  reported_by uuid references profiles(id) not null,
+  reason text not null,
+  evidence jsonb,
+  status text not null default 'open'
+    check (status in ('open', 'investigating', 'resolved', 'closed')),
+  resolution text,
+  resolved_by uuid references profiles(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Create transaction logs table
+create table transaction_logs (
+  id uuid primary key default uuid_generate_v4(),
+  transaction_id uuid references transactions(id) not null,
+  action text not null,
+  details jsonb,
+  performed_by uuid references profiles(id) not null,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table escrow_transactions enable row level security;
+alter table escrow_disputes enable row level security;
+alter table transaction_logs enable row level security;
+
+-- RLS Policies
+
+-- Escrow transactions
+create policy "Users can view their escrow transactions"
+  on escrow_transactions for select
+  using (
+    exists (
+      select 1 from transactions t
+      where t.id = transaction_id
+      and (t.buyer_id = auth.uid() or t.seller_id = auth.uid())
+    )
+  );
+
+create policy "Admins can manage escrow transactions"
+  on escrow_transactions for all
+  to authenticated
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  )
+  with check (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  );
+
+-- Escrow disputes
+create policy "Users can view their disputes"
+  on escrow_disputes for select
+  using (
+    exists (
+      select 1 from transactions t
+      where t.id = transaction_id
+      and (t.buyer_id = auth.uid() or t.seller_id = auth.uid())
+    )
+  );
+
+create policy "Users can create disputes"
+  on escrow_disputes for insert
+  with check (
+    exists (
+      select 1 from transactions t
+      where t.id = transaction_id
+      and (t.buyer_id = auth.uid() or t.seller_id = auth.uid())
+    )
+    and reported_by = auth.uid()
+  );
+
+create policy "Admins can manage disputes"
+  on escrow_disputes for all
+  to authenticated
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  )
+  with check (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  );
+
+-- Transaction logs
+create policy "Users can view their transaction logs"
+  on transaction_logs for select
+  using (
+    exists (
+      select 1 from transactions t
+      where t.id = transaction_id
+      and (t.buyer_id = auth.uid() or t.seller_id = auth.uid())
+    )
+  );
+
+create policy "Admins can view all transaction logs"
+  on transaction_logs for select
+  to authenticated
+  using (
+    exists (
+      select 1 from profiles
+      where id = auth.uid()
+      and role in ('admin', 'super_admin')
+    )
+  );
+
+-- Functions
+
+-- Function to create escrow transaction
+create or replace function create_escrow_transaction(
+  item_id uuid,
+  amount decimal
+)
+returns uuid
+language plpgsql
+security definer
+as $$
+declare
+  new_transaction_id uuid;
+  new_escrow_id uuid;
+begin
+  -- Create the transaction
+  insert into transactions (
+    item_id,
+    buyer_id,
+    seller_id,
+    amount,
+    status,
+    escrow_status
+  )
+  select
+    item_id,
+    auth.uid(),
+    seller_id,
+    amount,
+    'pending',
+    'pending'
+  from items
+  where id = item_id
+  returning id into new_transaction_id;
+
+  -- Create the escrow transaction
+  insert into escrow_transactions (
+    transaction_id,
+    amount,
+    status
+  )
+  values (
+    new_transaction_id,
+    amount,
+    'pending'
+  )
+  returning id into new_escrow_id;
+
+  -- Log the action
+  insert into transaction_logs (
+    transaction_id,
+    action,
+    details,
+    performed_by
+  )
+  values (
+    new_transaction_id,
+    'create_escrow',
+    jsonb_build_object(
+      'amount', amount,
+      'escrow_id', new_escrow_id
+    ),
+    auth.uid()
+  );
+
+  return new_transaction_id;
+end;
+$$;
+
+-- Function to fund escrow
+create or replace function fund_escrow(transaction_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Verify user is the buyer
+  if not exists (
+    select 1 from transactions
+    where id = transaction_id
+    and buyer_id = auth.uid()
+    and escrow_status = 'pending'
+  ) then
+    raise exception 'Unauthorized or invalid transaction status';
+  end if;
+
+  -- Update transaction and escrow status
+  update transactions
+  set escrow_status = 'funded'
+  where id = transaction_id;
+
+  update escrow_transactions
+  set 
+    status = 'funded',
+    funded_at = now()
+  where transaction_id = fund_escrow.transaction_id;
+
+  -- Log the action
+  insert into transaction_logs (
+    transaction_id,
+    action,
+    details,
+    performed_by
+  )
+  values (
+    transaction_id,
+    'fund_escrow',
+    jsonb_build_object('funded_at', now()),
+    auth.uid()
+  );
+end;
+$$;
+
+-- Function to release escrow
+create or replace function release_escrow(transaction_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Verify user is admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can release escrow';
+  end if;
+
+  -- Verify transaction status
+  if not exists (
+    select 1 from transactions
+    where id = transaction_id
+    and escrow_status = 'funded'
+  ) then
+    raise exception 'Invalid transaction status';
+  end if;
+
+  -- Update transaction and escrow status
+  update transactions
+  set 
+    escrow_status = 'released',
+    status = 'completed'
+  where id = transaction_id;
+
+  update escrow_transactions
+  set 
+    status = 'released',
+    released_at = now()
+  where transaction_id = release_escrow.transaction_id;
+
+  -- Log the action
+  insert into transaction_logs (
+    transaction_id,
+    action,
+    details,
+    performed_by
+  )
+  values (
+    transaction_id,
+    'release_escrow',
+    jsonb_build_object('released_at', now()),
+    auth.uid()
+  );
+end;
+$$;
+
+-- Function to refund escrow
+create or replace function refund_escrow(transaction_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  -- Verify user is admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can refund escrow';
+  end if;
+
+  -- Verify transaction status
+  if not exists (
+    select 1 from transactions
+    where id = transaction_id
+    and escrow_status in ('funded', 'disputed')
+  ) then
+    raise exception 'Invalid transaction status';
+  end if;
+
+  -- Update transaction and escrow status
+  update transactions
+  set 
+    escrow_status = 'refunded',
+    status = 'cancelled'
+  where id = transaction_id;
+
+  update escrow_transactions
+  set 
+    status = 'refunded',
+    refunded_at = now()
+  where transaction_id = refund_escrow.transaction_id;
+
+  -- Log the action
+  insert into transaction_logs (
+    transaction_id,
+    action,
+    details,
+    performed_by
+  )
+  values (
+    transaction_id,
+    'refund_escrow',
+    jsonb_build_object('refunded_at', now()),
+    auth.uid()
+  );
+end;
+$$;
+
+-- Function to create dispute
+create or replace function create_dispute(
+  transaction_id uuid,
+  reason text,
+  evidence jsonb default null
+)
+returns uuid
+language plpgsql
+security definer
+as $$
+declare
+  new_dispute_id uuid;
+begin
+  -- Verify user is buyer or seller
+  if not exists (
+    select 1 from transactions
+    where id = transaction_id
+    and (buyer_id = auth.uid() or seller_id = auth.uid())
+    and escrow_status = 'funded'
+  ) then
+    raise exception 'Unauthorized or invalid transaction status';
+  end if;
+
+  -- Create dispute
+  insert into escrow_disputes (
+    transaction_id,
+    reported_by,
+    reason,
+    evidence
+  )
+  values (
+    transaction_id,
+    auth.uid(),
+    reason,
+    evidence
+  )
+  returning id into new_dispute_id;
+
+  -- Update transaction status
+  update transactions
+  set escrow_status = 'disputed'
+  where id = transaction_id;
+
+  -- Log the action
+  insert into transaction_logs (
+    transaction_id,
+    action,
+    details,
+    performed_by
+  )
+  values (
+    transaction_id,
+    'create_dispute',
+    jsonb_build_object(
+      'dispute_id', new_dispute_id,
+      'reason', reason
+    ),
+    auth.uid()
+  );
+
+  return new_dispute_id;
+end;
+$$;
+
+-- Function to resolve dispute
+create or replace function resolve_dispute(
+  dispute_id uuid,
+  resolution text,
+  action text
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  transaction_id uuid;
+begin
+  -- Verify user is admin
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid()
+    and role in ('admin', 'super_admin')
+  ) then
+    raise exception 'Only admins can resolve disputes';
+  end if;
+
+  -- Get transaction ID
+  select d.transaction_id into transaction_id
+  from escrow_disputes d
+  where d.id = dispute_id;
+
+  -- Update dispute
+  update escrow_disputes
+  set 
+    status = 'resolved',
+    resolution = resolve_dispute.resolution,
+    resolved_by = auth.uid(),
+    updated_at = now()
+  where id = dispute_id;
+
+  -- Handle resolution action
+  case action
+    when 'release' then
+      perform release_escrow(transaction_id);
+    when 'refund' then
+      perform refund_escrow(transaction_id);
+    else
+      raise exception 'Invalid resolution action';
+  end case;
+
+  -- Log the action
+  insert into transaction_logs (
+    transaction_id,
+    action,
+    details,
+    performed_by
+  )
+  values (
+    transaction_id,
+    'resolve_dispute',
+    jsonb_build_object(
+      'dispute_id', dispute_id,
+      'resolution', resolution,
+      'action', action
+    ),
+    auth.uid()
+  );
+end;
+$$;
+
+================
+File: .gitignore
+================
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+================
+File: eslint.config.js
+================
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  }
+);
+
+================
+File: index.html
+================
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+================
+File: package.json
+================
+{
+  "name": "treasure-trove",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.22.2",
+    "date-fns": "^3.3.1",
+    "react-hook-form": "^7.51.0",
+    "zustand": "^4.5.2",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "globals": "^15.9.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
+    "vite": "^5.4.2"
+  }
+}
+
+================
+File: postcss.config.js
+================
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+
+================
+File: README.md
+================
+# treasure-trove
+
+[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/rylxes/treasure-trove)
+
+================
+File: tailwind.config.js
+================
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+
+================
+File: tsconfig.app.json
+================
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+
+================
+File: tsconfig.json
+================
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+================
+File: tsconfig.node.json
+================
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+================
+File: vite.config.ts
+================
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
+});
+
+
+
+================================================================
+End of Codebase
+================================================================
