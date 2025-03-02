@@ -1,6 +1,6 @@
 // src/App.tsx
 import React from 'react';
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import {Navbar} from './components/Navbar';
 import {Footer} from './components/Footer';
 import {Home} from './pages/Home';
@@ -13,8 +13,13 @@ import {Notifications} from './pages/Notifications';
 import {Auth} from './pages/Auth';
 import {CreateListing} from './pages/CreateListing';
 import {Admin} from './pages/Admin';
+import {Wishlist} from './pages/Wishlist'; // Import the new Wishlist page
 import {AuthProvider} from './contexts/AuthContext';
 import {Toaster} from './components/ui/Toaster';
+import {PriceAlerts} from './pages/PriceAlerts';
+import {StockAlerts} from './pages/StockAlerts';
+import {SavedSearchAlerts} from './pages/SavedSearchAlerts';
+
 
 function App() {
     return (
@@ -34,6 +39,11 @@ function App() {
                             <Route path="/auth" element={<Auth/>}/>
                             <Route path="/create-listing" element={<CreateListing/>}/>
                             <Route path="/admin" element={<Admin/>}/>
+                            <Route path="/wishlist" element={<Wishlist/>}/>
+                            <Route path="/price-alerts"
+                                   element={<PriceAlerts/>}/>
+                            <Route path="/stock-alerts" element={<StockAlerts/>}/>
+                            <Route path="/saved-search-alerts" element={<SavedSearchAlerts/>}/>
                         </Routes>
                     </main>
                     <Footer/>

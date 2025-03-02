@@ -1,11 +1,11 @@
 // src/pages/Browse.tsx
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
-import {Search, SlidersHorizontal, X, Loader, Filter, ArrowUpDown} from 'lucide-react';
+import {Loader, Search, SlidersHorizontal, X} from 'lucide-react';
 import {supabase} from '../lib/supabase';
-import {searchItems, SearchItem, SearchParams} from '../lib/elasticsearch';
+import {SearchItem, searchItems, SearchParams} from '../lib/elasticsearch';
 import {debounce} from 'lodash';
-import {SearchResultItem} from '../components/SearchResultItem';
+import {EnhancedSavedSearches} from '../components/EnhancedSavedSearches';
 
 interface Category {
     id: string;
@@ -252,6 +252,10 @@ export function Browse() {
                     </div>
                 </div>
             )}
+
+            <div className="mb-8">
+                <EnhancedSavedSearches/>
+            </div>
 
             {/* Items Grid */}
             {loading && items.length === 0 ? (

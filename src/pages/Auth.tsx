@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, ShoppingBag } from 'lucide-react';
+import { User, ShoppingBag, Package } from 'lucide-react';
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);

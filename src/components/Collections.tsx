@@ -27,8 +27,9 @@ export function Collections() {
     }
 
     async function handleCreateCollection() {
+        if (!user) return; // Ensure user is authenticated
         try {
-            await createCollection(newCollection.name, newCollection.description, newCollection.isPublic);
+            await createCollection(user.id, newCollection.name, newCollection.description, newCollection.isPublic);
             setNewCollection({name: '', description: '', isPublic: false});
             fetchCollections();
         } catch (error) {
