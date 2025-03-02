@@ -19,6 +19,7 @@ import {Toaster} from './components/ui/Toaster';
 import {PriceAlerts} from './pages/PriceAlerts';
 import {StockAlerts} from './pages/StockAlerts';
 import {SavedSearchAlerts} from './pages/SavedSearchAlerts';
+import {MyItems} from "./pages/MyItems.tsx";
 
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                                    element={<PriceAlerts/>}/>
                             <Route path="/stock-alerts" element={<StockAlerts/>}/>
                             <Route path="/saved-search-alerts" element={<SavedSearchAlerts/>}/>
+                            <Route path="/my-items" element={<MyItems />} />
                         </Routes>
                     </main>
                     <Footer/>

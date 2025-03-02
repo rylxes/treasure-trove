@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import {supabase} from './supabase';
 
 const publicVapidKey = 'YOUR_PUBLIC_VAPID_KEY'; // You'll need to set this up with web-push
 

@@ -1,7 +1,7 @@
 // src/components/SimilarItems.tsx
-import React, { useState, useEffect } from 'react';
-import { getSimilarItems, RecommendationItem } from '../lib/recommendations';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {getSimilarItems, RecommendationItem} from '../lib/recommendations';
+import {ChevronLeft, ChevronRight} from 'lucide-react';
 
 interface SimilarItemsProps {
   itemId: string;

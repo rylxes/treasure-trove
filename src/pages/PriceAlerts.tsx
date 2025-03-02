@@ -1,9 +1,9 @@
 // src/pages/PriceAlerts.tsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { BellRing, Loader, AlertTriangle, ArrowDown, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import React, {useEffect, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import {AlertTriangle, ArrowDown, BellRing, Loader, X} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {useAuth} from '../contexts/AuthContext';
 
 interface PriceAlert {
   id: string;

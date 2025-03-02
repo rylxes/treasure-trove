@@ -1,7 +1,7 @@
 // src/pages/Home.tsx
 import React from 'react';
 import {Link} from 'react-router-dom';
-import {Search, Tag, ShieldCheck, TrendingUp} from 'lucide-react';
+import {Search, ShieldCheck, Tag} from 'lucide-react';
 import {AIRecommendations} from '../components/AIRecommendations';
 import {RecentlyViewedItems} from '../components/RecentlyViewedItems';
 import {useAuth} from '../contexts/AuthContext';

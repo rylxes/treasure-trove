@@ -1,8 +1,8 @@
 // src/components/WishListButton.tsx
-import React, { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import React, {useEffect, useState} from 'react';
+import {Heart} from 'lucide-react';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
 
 interface WishListButtonProps {
   itemId: string;

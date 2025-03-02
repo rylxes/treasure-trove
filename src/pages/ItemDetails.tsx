@@ -1,5 +1,5 @@
 // src/pages/ItemDetails.tsx
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {AlertTriangle, MessageSquare} from 'lucide-react';
 import {supabase} from '../lib/supabase';
@@ -15,6 +15,7 @@ import {PriceAlertButton} from '../components/PriceAlertButton';
 import {PriceHistory} from '../components/PriceHistory';
 import {StockAlertButton} from '../components/StockAlertButton';
 import {UpdateStockStatus} from '../components/UpdateStockStatus';
+import {DonateButton} from "../components/DonateButton.tsx";
 
 
 interface Item {
@@ -335,6 +336,8 @@ export function ItemDetails() {
                             <p className="text-gray-600 mb-4">This is your item listing</p>
 
                             <div className="flex flex-col gap-3">
+                                <ShareListing itemId={item.id} title={item.title}/>
+                                <DonateButton itemId={item.id}/>
                                 <UpdateStockStatus
                                     itemId={item.id}
                                     currentStatus={item.stock_status}

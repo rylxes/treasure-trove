@@ -1,12 +1,12 @@
 // src/components/EnhancedSavedSearches.tsx
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Bell, Trash2, AlertCircle } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import {useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
+import {AlertCircle, Bell, Search, Trash2} from 'lucide-react';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
 
 export function EnhancedSavedSearches() {
-    const { user } = useAuth();
+    const {user} = useAuth();
     const [searches, setSearches] = useState<any[]>([]);
     const [newSearch, setNewSearch] = useState({
         name: '',
@@ -77,7 +77,7 @@ export function EnhancedSavedSearches() {
 
     async function fetchSearches() {
         try {
-            const { data, error } = await supabase.rpc('get_saved_searches_with_alerts');
+            const {data, error} = await supabase.rpc('get_saved_searches_with_alerts');
             if (error) throw error;
             setSearches(data || []);
         } catch (error) {
@@ -108,7 +108,7 @@ export function EnhancedSavedSearches() {
             };
 
             // Save the search
-            const { error } = await supabase
+            const {error} = await supabase
                 .from('saved_searches')
                 .insert({
                     user_id: user.id,
@@ -143,7 +143,7 @@ export function EnhancedSavedSearches() {
 
     async function handleDeleteSearch(id: string) {
         try {
-            const { error } = await supabase
+            const {error} = await supabase
                 .from('saved_searches')
                 .delete()
                 .eq('id', id);
@@ -164,13 +164,14 @@ export function EnhancedSavedSearches() {
                 <div className="bg-indigo-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                            <AlertCircle size={20} className="text-indigo-600" />
+                            <AlertCircle size={20} className="text-indigo-600"/>
                             <h3 className="font-semibold">Save Your Current Search</h3>
                         </div>
                     </div>
 
                     <p className="text-gray-600 mb-3">
-                        Save <span className="font-medium">{currentSearch}</span> to easily run it again or get alerts about new matching items.
+                        Save <span className="font-medium">{currentSearch}</span> to easily run it
+                        again or get alerts about new matching items.
                     </p>
 
                     <div className="space-y-3">
@@ -187,10 +188,14 @@ export function EnhancedSavedSearches() {
                                 <input
                                     type="checkbox"
                                     checked={newSearch.alertEnabled}
-                                    onChange={e => setNewSearch({...newSearch, alertEnabled: e.target.checked})}
+                                    onChange={e => setNewSearch({
+                                        ...newSearch,
+                                        alertEnabled: e.target.checked
+                                    })}
                                     className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                 />
-                                <span className="text-sm text-gray-700">Enable alerts for new items</span>
+                                <span
+                                    className="text-sm text-gray-700">Enable alerts for new items</span>
                             </label>
 
                             {newSearch.alertEnabled && (
@@ -199,7 +204,10 @@ export function EnhancedSavedSearches() {
                                         <input
                                             type="checkbox"
                                             checked={newSearch.notifyEmail}
-                                            onChange={e => setNewSearch({...newSearch, notifyEmail: e.target.checked})}
+                                            onChange={e => setNewSearch({
+                                                ...newSearch,
+                                                notifyEmail: e.target.checked
+                                            })}
                                             className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         />
                                         <span className="text-sm text-gray-700">Email</span>
@@ -208,7 +216,10 @@ export function EnhancedSavedSearches() {
                                         <input
                                             type="checkbox"
                                             checked={newSearch.notifyPush}
-                                            onChange={e => setNewSearch({...newSearch, notifyPush: e.target.checked})}
+                                            onChange={e => setNewSearch({
+                                                ...newSearch,
+                                                notifyPush: e.target.checked
+                                            })}
                                             className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         />
                                         <span className="text-sm text-gray-700">Push</span>
@@ -259,10 +270,10 @@ export function EnhancedSavedSearches() {
                         {searches.slice(0, 3).map((search) => (
                             <div key={search.id} className="py-3 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Search size={16} className="text-indigo-600" />
+                                    <Search size={16} className="text-indigo-600"/>
                                     <span>{search.name}</span>
                                     {search.alert_enabled && (
-                                        <Bell size={12} className="text-indigo-600" />
+                                        <Bell size={12} className="text-indigo-600"/>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -276,7 +287,7 @@ export function EnhancedSavedSearches() {
                                         onClick={() => handleDeleteSearch(search.id)}
                                         className="text-red-600 hover:text-red-800"
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={16}/>
                                     </button>
                                 </div>
                             </div>

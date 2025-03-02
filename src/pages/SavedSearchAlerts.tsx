@@ -1,9 +1,9 @@
 // src/pages/SavedSearchAlerts.tsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Loader, AlertTriangle, Bell, X, Edit, Clock, Check } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import React, {useEffect, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import {AlertTriangle, Bell, Check, Clock, Edit, Loader, Search, X} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {useAuth} from '../contexts/AuthContext';
 
 interface SavedSearch {
   id: string;

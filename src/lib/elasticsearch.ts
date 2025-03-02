@@ -1,5 +1,5 @@
 // src/lib/elasticsearch.ts
-import { supabase } from './supabase';
+import {supabase} from './supabase';
 
 // Interface for search parameters
 export interface SearchParams {

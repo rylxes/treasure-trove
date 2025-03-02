@@ -1,6 +1,6 @@
 // src/components/ShareListing.tsx
 import React from 'react';
-import { Share2, Twitter, Facebook } from 'lucide-react';
+import {Facebook, Share2, Twitter} from 'lucide-react';
 
 interface ShareListingProps {
   itemId: string;

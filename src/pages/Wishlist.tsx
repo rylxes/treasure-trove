@@ -1,10 +1,10 @@
 // src/pages/Wishlist.tsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Loader, AlertTriangle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
-import { WishListButton } from '../components/WishListButton';
+import React, {useEffect, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import {AlertTriangle, Heart, Loader} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {useAuth} from '../contexts/AuthContext';
+import {WishListButton} from '../components/WishListButton';
 
 interface WishlistItem {
   id: string;

@@ -1,5 +1,5 @@
 // src/lib/recommendations.ts
-import { supabase } from './supabase';
+import {supabase} from './supabase';
 
 // Interface for recommendation item
 export interface RecommendationItem {

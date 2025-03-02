@@ -1,8 +1,8 @@
 // src/components/StockAlertButton.tsx
-import React, { useState, useEffect } from 'react';
-import { Bell, AlertTriangle, X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import React, {useEffect, useState} from 'react';
+import {AlertTriangle, Bell, X} from 'lucide-react';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
 
 interface StockAlertButtonProps {
   itemId: string;

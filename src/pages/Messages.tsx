@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
-import { Send } from 'lucide-react';
-import { format } from 'date-fns';
+import React, {useEffect, useState} from 'react';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
+import {Send} from 'lucide-react';
+import {format} from 'date-fns';
 
 interface Message {
   id: string;

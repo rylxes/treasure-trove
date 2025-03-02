@@ -1,7 +1,11 @@
 // src/components/admin/ElasticsearchStatus.tsx
-import React, { useState, useEffect } from 'react';
-import { checkElasticsearchStatus, ElasticsearchStatus as StatusType, testElasticsearchConnection } from '../../lib/elasticsearch';
-import { Database, RefreshCw, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {
+  checkElasticsearchStatus,
+  ElasticsearchStatus as StatusType,
+  testElasticsearchConnection
+} from '../../lib/elasticsearch';
+import {AlertTriangle, CheckCircle, Database, RefreshCw, XCircle} from 'lucide-react';
 
 export function ElasticsearchStatus() {
   const [status, setStatus] = useState<StatusType | null>(null);

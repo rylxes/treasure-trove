@@ -1,9 +1,9 @@
 // src/components/admin/SearchRecommendationsControls.tsx
-import React, { useState } from 'react';
-import { RefreshCw, Database, Sparkles, AlertTriangle } from 'lucide-react';
-import { syncElasticsearch } from '../../lib/elasticsearch';
-import { updateRecommendations } from '../../lib/recommendations';
-import { ElasticsearchStatus } from './ElasticsearchStatus';
+import React, {useState} from 'react';
+import {AlertTriangle, Database, RefreshCw, Sparkles} from 'lucide-react';
+import {syncElasticsearch} from '../../lib/elasticsearch';
+import {updateRecommendations} from '../../lib/recommendations';
+import {ElasticsearchStatus} from './ElasticsearchStatus';
 
 export function SearchRecommendationsControls() {
   const [loading, setLoading] = useState({

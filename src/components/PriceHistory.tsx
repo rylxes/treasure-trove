@@ -1,9 +1,9 @@
 // src/components/PriceHistory.tsx
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowDown, ArrowUp, TrendingDown } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { supabase } from '../lib/supabase';
+import React, {useEffect, useState} from 'react';
+import {CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
+import {ArrowDown, ArrowUp, TrendingDown} from 'lucide-react';
+import {format, parseISO} from 'date-fns';
+import {supabase} from '../lib/supabase';
 
 interface PriceHistoryProps {
   itemId: string;

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
-import { Upload, X, ImageIcon } from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
+import {ImageIcon, Upload, X} from 'lucide-react';
 
 interface Category {
   id: string;

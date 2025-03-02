@@ -1,8 +1,8 @@
 // src/components/RecentlyViewedItems.tsx
-import React, { useState, useEffect } from 'react';
-import { getRecentlyViewedItems, RecommendationItem } from '../lib/recommendations';
-import { History, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import React, {useEffect, useState} from 'react';
+import {getRecentlyViewedItems, RecommendationItem} from '../lib/recommendations';
+import {ChevronLeft, ChevronRight, History} from 'lucide-react';
+import {useAuth} from '../contexts/AuthContext';
 
 interface RecentlyViewedItemsProps {
   limit?: number;

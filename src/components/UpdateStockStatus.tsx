@@ -1,8 +1,8 @@
 // src/components/UpdateStockStatus.tsx
-import React, { useState } from 'react';
-import { Package, AlertTriangle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { StockStatus } from './StockStatus';
+import React, {useState} from 'react';
+import {AlertTriangle, Package} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {StockStatus} from './StockStatus';
 
 interface UpdateStockStatusProps {
   itemId: string;

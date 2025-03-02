@@ -1,8 +1,9 @@
 // src/components/Collections.tsx
-import React, {useState, useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {Bookmark} from 'lucide-react';
 import {useAuth} from '../contexts/AuthContext';
 import {createCollection, getUserCollections} from '../lib/supabase';
+import {formatPrice, getCurrency} from '../lib/currency';
 
 export function Collections() {
     const {user} = useAuth();
@@ -12,6 +13,11 @@ export function Collections() {
         description: '',
         isPublic: false
     });
+
+    const [currency, setCurrency] = useState({code: 'USD', symbol: '$'});
+    useEffect(() => {
+        getCurrency().then(setCurrency);
+    }, []);
 
     useEffect(() => {
         if (user) fetchCollections();
@@ -105,7 +111,9 @@ export function Collections() {
                                         className="w-full h-24 object-cover rounded"
                                     />
                                     <p className="text-sm truncate">{ci.items.title}</p>
-                                    <p className="text-xs text-indigo-600">${ci.items.price}</p>
+                                    <p className="text-xs text-indigo-600">
+                                        {formatPrice(ci.items.price, currency.symbol)}
+                                    </p>
                                 </a>
                             ))}
                         </div>

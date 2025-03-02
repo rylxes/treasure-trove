@@ -1,11 +1,13 @@
 // src/pages/Admin.tsx
-import {useState, useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useAuth} from '../contexts/AuthContext';
 import {supabase} from '../lib/supabase';
-import {Shield, UserPlus, UserMinus, Search, AlertTriangle} from 'lucide-react';
+import {AlertTriangle, Search, Shield, UserMinus, UserPlus} from 'lucide-react';
 import {SearchRecommendationsControls} from '../components/admin/SearchRecommendationsControls';
-import {CategoryManager} from '../components/admin/CategoryManager'; // New import
+import {CategoryManager} from '../components/admin/CategoryManager';
+import {DonationManager} from "../components/admin/DonationManager.tsx";
+import {CurrencyManager} from "../components/admin/CurrencyManager.tsx"; // New import
 
 interface AdminUser {
     id: string;
@@ -402,6 +404,17 @@ export function Admin() {
                     <div className="mt-8">
                         <CategoryManager/>
                     </div>
+
+
+                    <div className="mt-8">
+                        <DonationManager/>
+                    </div>
+
+
+                    <div className="mt-8">
+                        <CurrencyManager/>
+                    </div>
+
 
                     {/* Additional tools can be added here */}
                     <div className="bg-white rounded-lg shadow p-6 mt-8">

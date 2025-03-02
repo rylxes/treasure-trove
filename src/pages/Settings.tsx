@@ -1,9 +1,9 @@
 // src/pages/Settings.tsx
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useAuth} from '../contexts/AuthContext';
 import {supabase} from '../lib/supabase';
-import {Upload, Loader2} from 'lucide-react';
+import {Loader2, Upload} from 'lucide-react';
 import {SavedSearches} from '../components/SavedSearches'; // New import
 
 interface Profile {

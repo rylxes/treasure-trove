@@ -1,10 +1,10 @@
 // src/pages/StockAlerts.tsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Loader, AlertTriangle, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
-import { StockStatus } from '../components/StockStatus';
+import React, {useEffect, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import {AlertTriangle, Bell, Loader, X} from 'lucide-react';
+import {supabase} from '../lib/supabase';
+import {useAuth} from '../contexts/AuthContext';
+import {StockStatus} from '../components/StockStatus';
 
 interface StockAlert {
   id: string;

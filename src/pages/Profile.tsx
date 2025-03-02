@@ -1,9 +1,9 @@
 // src/pages/Profile.tsx
-import React, {useState, useEffect} from 'react';
-import {useParams, Link} from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Link, useParams} from 'react-router-dom';
 import {useAuth} from '../contexts/AuthContext';
 import {supabase} from '../lib/supabase';
-import {Star, MessageSquare, Package, Settings, ShoppingBag, Heart} from 'lucide-react';
+import {Heart, MessageSquare, Package, Settings, ShoppingBag, Star} from 'lucide-react';
 import {useProfileViews} from '../hooks/useAnalytics';
 import {FollowSellerButton} from '../components/FollowSellerButton'; // New import
 import {Collections} from '../components/Collections'; // New import

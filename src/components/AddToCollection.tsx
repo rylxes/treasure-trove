@@ -1,5 +1,5 @@
 // src/components/AddToCollection.tsx
-import React, {useState, useEffect} from 'react';
+import  {useEffect, useState} from 'react';
 import {Plus} from 'lucide-react';
 import {useAuth} from '../contexts/AuthContext';
 import {addToCollection, getUserCollections} from '../lib/supabase';

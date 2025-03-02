@@ -1,6 +1,6 @@
 // src/components/StockStatus.tsx
 import React from 'react';
-import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import {AlertTriangle, CheckCircle, XCircle} from 'lucide-react';
 
 interface StockStatusProps {
   status: string;

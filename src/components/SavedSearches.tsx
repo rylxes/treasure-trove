@@ -1,8 +1,8 @@
 // src/components/SavedSearches.tsx
-import React, {useState, useEffect} from 'react';
-import {Search, Bell, Trash2} from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {Bell, Search, Trash2} from 'lucide-react';
 import {useAuth} from '../contexts/AuthContext';
-import {saveSearch, getSavedSearches, deleteSavedSearch} from '../lib/supabase';
+import {deleteSavedSearch, getSavedSearches, saveSearch} from '../lib/supabase';
 
 export function SavedSearches() {
     const {user} = useAuth();

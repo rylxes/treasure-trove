@@ -1,7 +1,7 @@
 // src/components/admin/CategoryManager.tsx
-import React, {useState, useEffect} from 'react';
-import {Tag, Plus, Edit, Trash2} from 'lucide-react';
-import {manageCategory, getCategories} from '../../lib/supabase';
+import React, {useEffect, useState} from 'react';
+import {Edit, Tag, Trash2} from 'lucide-react';
+import {getCategories, manageCategory} from '../../lib/supabase';
 
 export function CategoryManager() {
     const [categories, setCategories] = useState<any[]>([]);

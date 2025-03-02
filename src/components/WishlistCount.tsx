@@ -1,9 +1,9 @@
 // src/components/WishlistCount.tsx
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import React, {useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
+import {Heart} from 'lucide-react';
+import {useAuth} from '../contexts/AuthContext';
+import {supabase} from '../lib/supabase';
 
 export function WishlistCount() {
   const { user } = useAuth();
