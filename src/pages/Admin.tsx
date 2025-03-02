@@ -5,6 +5,7 @@ import {useAuth} from '../contexts/AuthContext';
 import {supabase} from '../lib/supabase';
 import {Shield, UserPlus, UserMinus, Search, AlertTriangle} from 'lucide-react';
 import {SearchRecommendationsControls} from '../components/admin/SearchRecommendationsControls';
+import {CategoryManager} from '../components/admin/CategoryManager'; // New import
 
 interface AdminUser {
     id: string;
@@ -101,7 +102,7 @@ export function Admin() {
                 const authUser = authUsers?.find(user => user.id === profile.id);
                 return {
                     ...profile,
-                    email: authUser?.email || 'N/A'
+                    email: authUser?.email || 'N/A',
                 };
             });
 
@@ -139,7 +140,7 @@ export function Admin() {
         try {
             setError('');
             const {error} = await supabase.rpc('promote_to_admin', {
-                user_id: userId
+                user_id: userId,
             });
 
             if (error) throw error;
@@ -155,7 +156,7 @@ export function Admin() {
         try {
             setError('');
             const {error} = await supabase.rpc('revoke_admin', {
-                user_id: userId
+                user_id: userId,
             });
 
             if (error) throw error;
@@ -245,7 +246,8 @@ export function Admin() {
                     <div className="mb-6">
                         <div className="relative">
                             <Search
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            />
                             <input
                                 type="text"
                                 placeholder="Search users..."
@@ -313,7 +315,8 @@ export function Admin() {
                                   : user.role === 'admin'
                                       ? 'bg-green-100 text-green-800'
                                       : 'bg-gray-100 text-gray-800'
-                          }`}>
+                          }`}
+                      >
                         {user.role}
                       </span>
                                     </td>
@@ -395,8 +398,13 @@ export function Admin() {
                     {/* Search & Recommendations Tools */}
                     <SearchRecommendationsControls/>
 
+                    {/* Category Manager */}
+                    <div className="mt-8">
+                        <CategoryManager/>
+                    </div>
+
                     {/* Additional tools can be added here */}
-                    <div className="bg-white rounded-lg shadow p-6">
+                    <div className="bg-white rounded-lg shadow p-6 mt-8">
                         <h3 className="text-xl font-semibold mb-4">More Tools Coming Soon</h3>
                         <p className="text-gray-600">
                             Additional admin tools will be added in future updates. Stay tuned!
