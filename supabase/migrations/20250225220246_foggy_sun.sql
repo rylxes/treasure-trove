@@ -1,5 +1,5 @@
 /*
-  # Initial Schema for Treasure Trove
+  # Initial Schema for Hoard Valley
 
   1. Tables
     - profiles

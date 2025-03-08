@@ -61,7 +61,7 @@ export function Navbar() {
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     <Link to="/" className="flex items-center space-x-2">
-                        <span className="text-2xl font-bold text-indigo-600">Treasure Trove</span>
+                        <span className="text-2xl font-bold text-indigo-600">Hoard Valley</span>
                     </Link>
 
                     <div className="flex items-center space-x-4">

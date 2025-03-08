@@ -1,6 +1,6 @@
 # Elasticsearch Setup Guide
 
-This guide provides instructions for setting up Elasticsearch for the Treasure Trove marketplace application.
+This guide provides instructions for setting up Elasticsearch for the Hoard Valley marketplace application.
 
 ## Prerequisites
 

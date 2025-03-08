@@ -1,6 +1,6 @@
-# Treasure Trove New Features Documentation
+# Hoard Valley New Features Documentation
 
-This document outlines the new features added to the Treasure Trove marketplace application and provides implementation details for each feature.
+This document outlines the new features added to the Hoard Valley marketplace application and provides implementation details for each feature.
 
 ## Table of Contents
 

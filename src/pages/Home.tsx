@@ -35,7 +35,7 @@ export function Home() {
                 <div className="absolute inset-0 z-0">
                     <img
                         src="https://images.unsplash.com/photo-1529720317453-c8da503f2051?auto=format&fit=crop&q=80&w=2000"
-                        alt="Treasure Trove Hero"
+                        alt="Hoard Valley Hero"
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-50"/>
