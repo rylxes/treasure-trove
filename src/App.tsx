@@ -20,7 +20,6 @@ import {PriceAlerts} from './pages/PriceAlerts';
 import {StockAlerts} from './pages/StockAlerts';
 import {SavedSearchAlerts} from './pages/SavedSearchAlerts';
 import {MyItems} from "./pages/MyItems.tsx";
-import MyBidsPage from './pages/MyBidsPage'; // Import the new MyBidsPage
 
 
 function App() {
@@ -42,11 +41,11 @@ function App() {
                             <Route path="/create-listing" element={<CreateListing/>}/>
                             <Route path="/admin" element={<Admin/>}/>
                             <Route path="/wishlist" element={<Wishlist/>}/>
-                            <Route path="/price-alerts" element={<PriceAlerts/>}/>
+                            <Route path="/price-alerts"
+                                   element={<PriceAlerts/>}/>
                             <Route path="/stock-alerts" element={<StockAlerts/>}/>
                             <Route path="/saved-search-alerts" element={<SavedSearchAlerts/>}/>
                             <Route path="/my-items" element={<MyItems />} />
-                            <Route path="/my-bids" element={<MyBidsPage />} /> {/* Add route for MyBidsPage */}
                         </Routes>
                     </main>
                     <Footer/>
