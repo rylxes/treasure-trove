@@ -37,19 +37,53 @@ export function Admin() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState<'users' | 'logs' | 'tools'>('users');
+    const [error, setError] = useState(''); // General errors for user/log fetching
+    const [activeTab, setActiveTab] = useState<'users' | 'logs' | 'tools' | 'verifications'>('users');
+
+    // State for Seller Verifications
+    interface PendingVerificationRequest {
+        user_id: string;
+        username: string | null;
+        verification_status: string; // Should be 'pending_review'
+        verification_documents: any | null;
+        verification_submitted_at: string | null;
+    }
+    const [pendingVerifications, setPendingVerifications] = useState<PendingVerificationRequest[]>([]);
+    const [isLoadingVerifications, setIsLoadingVerifications] = useState(false);
+    const [verificationActionError, setVerificationActionError] = useState<string | null>(null);
+    const [showRejectionModal, setShowRejectionModal] = useState(false);
+    const [currentRejectionUserId, setCurrentRejectionUserId] = useState<string | null>(null);
+    const [rejectionNotes, setRejectionNotes] = useState('');
+
+
+    const fetchPendingVerifications = React.useCallback(async () => {
+        setIsLoadingVerifications(true);
+        setVerificationActionError(null);
+        try {
+            const { data, error: rpcError } = await supabase.rpc('admin_get_pending_verifications');
+            if (rpcError) throw rpcError;
+            setPendingVerifications(data || []);
+        } catch (err: any) {
+            console.error('Error fetching pending verifications:', err);
+            setVerificationActionError('Failed to load pending requests: ' + err.message);
+        } finally {
+            setIsLoadingVerifications(false);
+        }
+    }, []);
 
     useEffect(() => {
-        checkAdminStatus();
+        checkAdminStatus(); // This will set isAdmin and then trigger the next useEffect
     }, [user]);
 
     useEffect(() => {
         if (isAdmin) {
             fetchUsers();
             fetchLogs();
+            if (activeTab === 'verifications') { // Fetch verifications if admin and tab is active or becomes active
+                fetchPendingVerifications();
+            }
         }
-    }, [isAdmin]);
+    }, [isAdmin, activeTab, fetchPendingVerifications]); // Rerun if activeTab changes to verifications
 
     async function checkAdminStatus() {
         if (!user) {
@@ -239,6 +273,16 @@ export function Admin() {
                 >
                     Admin Tools
                 </button>
+                <button
+                    onClick={() => setActiveTab('verifications')}
+                    className={`px-4 py-2 rounded-lg ${
+                        activeTab === 'verifications'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                    Seller Verifications
+                </button>
             </div>
 
             {/* Users Tab */}
@@ -425,6 +469,143 @@ export function Admin() {
                     </div>
                 </>
             )}
+
+            {/* Seller Verifications Tab */}
+            {activeTab === 'verifications' && (
+                <>
+                    <h2 className="text-2xl font-bold mb-4">Pending Seller Verifications</h2>
+                    {isLoadingVerifications && <p>Loading verification requests...</p>}
+                    {verificationActionError && <p className="text-red-500 mb-2 p-3 bg-red-50 rounded-md">{verificationActionError}</p>}
+
+                    {!isLoadingVerifications && pendingVerifications.length === 0 && (
+                        <p className="text-gray-600">No pending verification requests at the moment.</p>
+                    )}
+
+                    {pendingVerifications.length > 0 && (
+                        <div className="bg-white rounded-lg shadow overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted At</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents/Info</th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {pendingVerifications.map(req => (
+                                        <tr key={req.user_id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{req.username || 'N/A'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {req.verification_submitted_at ? new Date(req.verification_submitted_at).toLocaleString() : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                {req.verification_documents ? (
+                                                    <pre className="bg-gray-100 p-2 rounded text-xs whitespace-pre-wrap max-w-md overflow-x-auto">
+                                                        {JSON.stringify(req.verification_documents, null, 2)}
+                                                    </pre>
+                                                ) : <span className="text-gray-400 italic">No documents/info</span>}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        setVerificationActionError(null);
+                                                        if (!window.confirm(`Are you sure you want to APPROVE seller: ${req.username || req.user_id}?`)) return;
+                                                        try {
+                                                            const { error: rpcErr } = await supabase.rpc('admin_update_seller_verification', {
+                                                            p_user_id: req.user_id,
+                                                            p_new_status: 'approved',
+                                                            p_is_verified: true,
+                                                            p_admin_notes: 'Approved by admin via panel.',
+                                                            });
+                                                            if (rpcErr) throw rpcErr;
+                                                            fetchPendingVerifications();
+                                                        } catch (err: any) {
+                                                            setVerificationActionError('Failed to approve: ' + err.message);
+                                                        }
+                                                    }}
+                                                    className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-md text-xs"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                     onClick={() => {
+                                                        setCurrentRejectionUserId(req.user_id);
+                                                        setRejectionNotes(''); // Clear previous notes
+                                                        setShowRejectionModal(true);
+                                                     }}
+                                                    className="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-md text-xs"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* Rejection Modal */}
+            {showRejectionModal && currentRejectionUserId && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
+                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-in-out scale-100">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Reject Verification</h3>
+                        <p className="text-sm text-gray-600 mb-1">User ID: <span className="font-mono">{currentRejectionUserId}</span></p>
+                        <p className="text-sm text-gray-600 mb-3">Please provide a reason for rejection (required).</p>
+                        <textarea
+                            value={rejectionNotes}
+                            onChange={(e) => setRejectionNotes(e.target.value)}
+                            placeholder="E.g., 'Submitted documents are unclear', 'Unable to verify identity'."
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm mb-4"
+                            rows={4}
+                        ></textarea>
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={() => {
+                                    setShowRejectionModal(false);
+                                    setCurrentRejectionUserId(null);
+                                    setRejectionNotes('');
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!rejectionNotes.trim()) {
+                                        alert('Rejection notes are required.');
+                                        return;
+                                    }
+                                    setVerificationActionError(null);
+                                    try {
+                                        const { error: rpcErr } = await supabase.rpc('admin_update_seller_verification', {
+                                        p_user_id: currentRejectionUserId,
+                                        p_new_status: 'rejected',
+                                        p_is_verified: false,
+                                        p_admin_notes: rejectionNotes.trim(),
+                                        });
+                                        if (rpcErr) throw rpcErr;
+                                        fetchPendingVerifications();
+                                        setShowRejectionModal(false);
+                                        setCurrentRejectionUserId(null);
+                                        setRejectionNotes('');
+                                    } catch (err: any) {
+                                        setVerificationActionError('Failed to reject: ' + err.message);
+                                    }
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm disabled:bg-gray-400"
+                                disabled={!rejectionNotes.trim()}
+                            >
+                                Confirm Rejection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

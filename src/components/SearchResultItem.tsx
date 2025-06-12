@@ -1,7 +1,8 @@
 // src/components/SearchResultItem.tsx
 import {Link} from 'react-router-dom';
-import {SearchItem} from '../lib/elasticsearch';
+import {SearchItem} from '../lib/elasticsearch'; // Assumed to potentially include seller.is_verified_seller
 import {SearchHighlight} from './SearchHighlight';
+import VerifiedBadge from './ui/VerifiedBadge'; // Import the new badge
 
 interface SearchResultItemProps {
     item: SearchItem;
@@ -35,8 +36,10 @@ export function SearchResultItem({item, searchTerm}: SearchResultItemProps) {
                         <span className="mx-1">•</span>
                         <span>{item.category.name}</span>
                     </div>
-                    <span className="flex items-center">★ {item.seller.rating}</span>
-                    {/* This is seller rating, we'll add item rating below if available */}
+                    <div className="flex items-center"> {/* Wrapped seller info for badge alignment */}
+                        <span>★ {item.seller.rating}</span>
+                        {item.seller?.is_verified_seller && <VerifiedBadge size="sm" className="ml-0.5" />}
+                    </div>
                 </div>
                 {/* Display Item Average Rating */}
                 { (typeof item.average_item_rating === 'number' || typeof item.item_review_count === 'number') && (
