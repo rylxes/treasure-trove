@@ -29,8 +29,17 @@ export function CreateListing() {
     condition: '',
     category_id: '',
     selling_method: 'fixed',
-    location: ''
+    location: '',
+    ends_at: '' // Added for auction end date
   });
+
+  // Helper function to get current local datetime string for min attribute
+  const getMinDateTimeLocal = () => {
+    const now = new Date();
+    // Adjust for timezone offset to get local time
+    const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return localNow.toISOString().slice(0, 16);
+  };
 
   useEffect(() => {
     if (user) {
@@ -147,15 +156,28 @@ export function CreateListing() {
       );
 
       // Create item
+      const itemPayload: any = {
+        ...formData,
+        price: parseFloat(formData.price),
+        seller_id: user.id,
+        images: uploadedImageUrls,
+        is_active: true,
+        // Ensure ends_at is null if not an auction, or properly formatted ISO string if it is
+        ends_at: formData.selling_method === 'auction' && formData.ends_at
+                 ? new Date(formData.ends_at).toISOString()
+                 : null,
+      };
+
+      // Basic validation for auction end date
+      if (formData.selling_method === 'auction' && (!formData.ends_at || new Date(formData.ends_at) <= new Date())) {
+        alert('For auctions, please specify a future end date and time.');
+        setLoading(false);
+        return;
+      }
+
       const { error: insertError } = await supabase
         .from('items')
-        .insert({
-          ...formData,
-          price: parseFloat(formData.price),
-          seller_id: user.id,
-          images: uploadedImageUrls,
-          is_active: true
-        });
+        .insert(itemPayload);
 
       if (insertError) throw insertError;
 
@@ -289,7 +311,7 @@ export function CreateListing() {
                 htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Price
+                {formData.selling_method === 'auction' ? 'Starting Price' : 'Price'}
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -373,11 +395,15 @@ export function CreateListing() {
               <select
                 id="selling_method"
                 value={formData.selling_method}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newSellingMethod = e.target.value;
                   setFormData((prev) => ({
                     ...prev,
-                    selling_method: e.target.value }))
-                }
+                    selling_method: newSellingMethod,
+                    // Reset ends_at if switching away from auction
+                    ends_at: newSellingMethod !== 'auction' ? '' : prev.ends_at
+                  }));
+                }}
                 className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               >
@@ -387,6 +413,31 @@ export function CreateListing() {
               </select>
             </div>
           </div>
+
+          {/* Auction End Date - Conditional */}
+          {formData.selling_method === 'auction' && (
+            <div>
+              <label
+                htmlFor="ends_at"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Auction End Date & Time
+              </label>
+              <input
+                type="datetime-local"
+                id="ends_at"
+                name="ends_at" // Ensure name matches formData key for direct update if using spread for setFormData
+                value={formData.ends_at}
+                onChange={(e) => setFormData(prev => ({ ...prev, ends_at: e.target.value }))}
+                min={getMinDateTimeLocal()}
+                className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required={formData.selling_method === 'auction'} // Required only if auction
+              />
+              {formData.ends_at && new Date(formData.ends_at) <= new Date() && (
+                 <p className="text-xs text-red-500 mt-1">End date must be in the future.</p>
+              )}
+            </div>
+          )}
 
           {/* Location */}
           <div>

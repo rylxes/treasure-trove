@@ -110,7 +110,14 @@ export function Navbar() {
                                             >
                                                 Profile
                                             </Link>
-                                            <Link to="/my-items" className="block px-4 py-2 text-gray-800 hover:bg-indigo-50">My Items</Link>
+                                            <Link to="/my-items" onClick={() => setShowDropdown(false)} className="block px-4 py-2 text-gray-800 hover:bg-indigo-50">My Items</Link>
+                                            <Link
+                                                to="/my-bids"
+                                                onClick={() => setShowDropdown(false)}
+                                                className="block px-4 py-2 text-gray-800 hover:bg-indigo-50"
+                                            >
+                                                My Bids
+                                            </Link>
                                             <Link
                                                 to="/wishlist"
                                                 onClick={() => setShowDropdown(false)}

@@ -21,6 +21,9 @@ import {DonateButton} from "../components/DonateButton.tsx";
 import ItemReviewList from '../components/ItemReviewList';
 import ItemReviewForm from '../components/ItemReviewForm';
 
+// Import BidList component
+import BidList from '../components/BidList';
+
 
 interface Item {
     id: string;
@@ -35,20 +38,80 @@ interface Item {
     stock_status: string;
     average_item_rating?: number; // Added for item reviews
     item_review_count?: number;   // Added for item reviews
-    // seller details seem to be for seller's overall rating, not specific to this item's seller in context of item reviews
-    seller: {
-        id: string;
+    seller_id: string; // Direct access to seller_id
+    seller: { // This is the joined 'profiles' table aliased as 'seller'
+        id: string; // This is profiles.id which is items.seller_id
         username: string;
         rating: number; // This is seller's overall rating
         total_ratings: number; // This is seller's overall total ratings
     };
+    // Auction specific fields from 'items' table
+    ends_at?: string | null;
+    current_bid_amount?: number | null;
+    bid_count?: number;
+    is_active?: boolean; // To determine if auction is ongoing, ended, or processed
+
     // category_name and seller_username can be added if fetched via joins as in conceptual example
     category_name?: string;
-    seller_username?: string; // This might be redundant if item.seller.username is already there
+    // seller_username is redundant due to item.seller.username
 }
 
+
+// Countdown Timer Component
+const CountdownTimer: React.FC<{ endsAt: string | null | undefined, onAuctionEnd?: () => void }> = ({ endsAt, onAuctionEnd }) => {
+  const calculateTimeLeft = React.useCallback(() => { // useCallback to stabilize the function
+    if (!endsAt) return null;
+    const difference = +new Date(endsAt) - +new Date();
+    let timeLeftData = {};
+
+    if (difference > 0) {
+      timeLeftData = {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    } else {
+      // Auction ended
+      if (onAuctionEnd) onAuctionEnd();
+    }
+    return timeLeftData;
+  }, [endsAt, onAuctionEnd]);
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    if (!endsAt || +new Date(endsAt) - +new Date() <= 0) { // Check if already ended
+      setTimeLeft(null); // Ensure no timer if ended
+      return;
+    }
+
+    const timer = setInterval(() => { // Use setInterval for continuous update
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer); // Clear interval on unmount or change
+  }, [endsAt, calculateTimeLeft]);
+
+  if (!timeLeft || Object.keys(timeLeft).length === 0) {
+    return <span className="text-red-500 font-semibold">Auction Ended</span>;
+  }
+
+  const typedTimeLeft = timeLeft as { days: number, hours: number, minutes: number, seconds: number };
+
+  return (
+    <span className="text-lg font-semibold text-blue-600">
+      {typedTimeLeft.days > 0 && `${typedTimeLeft.days}d `}
+      {typedTimeLeft.hours > 0 && `${typedTimeLeft.hours}h `}
+      {typedTimeLeft.minutes > 0 && `${typedTimeLeft.minutes}m `}
+      {typedTimeLeft.seconds >= 0 ? `${typedTimeLeft.seconds}s left` : '0s left'}
+    </span>
+  );
+};
+
+
 export function ItemDetails() {
-    const {id: itemId} = useParams<{ id: string }>(); // Renamed id to itemId for clarity
+    const {id: itemId} = useParams<{ id: string }>();
     const navigate = useNavigate();
     const {user} = useAuth();
     const [item, setItem] = useState<Item | null>(null);
@@ -59,28 +122,36 @@ export function ItemDetails() {
     const [error, setError] = useState(''); // For general page errors
     const [viewerCount, setViewerCount] = useState(0);
 
-    // State to trigger refresh of review list after a new review is submitted
+    // State for item reviews
     const [reviewRefreshKey, setReviewRefreshKey] = useState<number>(0);
 
+    // State for bidding
+    const [bidAmount, setBidAmount] = useState<string>('');
+    const [isBidding, setIsBidding] = useState<boolean>(false);
+    const [bidError, setBidError] = useState<string | null>(null);
+    const [bidSuccess, setBidSuccess] = useState<string | null>(null);
+    const [bidListRefreshKey, setBidListRefreshKey] = useState<number>(0); // For refreshing BidList
+
+
     // Track item views for analytics
-    useItemViews(itemId!); // Use itemId
+    useItemViews(itemId!);
 
     useEffect(() => {
-        if (itemId) { // Use itemId
-            fetchItemDetails(); // Renamed for clarity and to match conceptual example
+        if (itemId) {
+            fetchItemDetails();
             fetchViewerCount();
 
-            // Track view for recommendations
             if (user) {
-                trackItemView(itemId); // Use itemId
+                trackItemView(itemId);
             }
         }
-    }, [itemId, user]); // Use itemId
+    }, [itemId, user]);
 
-    async function fetchItemDetails() { // Renamed
+    async function fetchItemDetails() {
         if (!itemId) return;
         setLoading(true);
-        setError(null);
+        // Keep existing general error if it's not a new item load, clear only if new item
+        // setError(null); // Let's manage this more carefully, perhaps clear only specific errors
         try {
             // Fetch item details. Ensure your query selects the new rating fields.
             const {data, error: fetchError} = await supabase
@@ -96,15 +167,15 @@ export function ItemDetails() {
                         total_ratings
                     )
                 `)
-                .eq('id', itemId) // Use itemId
+                .eq('id', itemId)
                 .single();
 
             if (fetchError) throw fetchError;
 
-            // The data should match the Item interface more directly now
-            // if category_name etc. are needed, the select query needs to be adjusted with joins
-            // e.g. category:categories(name)
             setItem(data as Item);
+            // Clear bid-specific errors/success messages when item re-fetches
+            setBidError(null);
+            setBidSuccess(null);
 
         } catch (err: any) {
             console.error('Error fetching item details:', err);
@@ -115,29 +186,58 @@ export function ItemDetails() {
     }
 
     async function fetchViewerCount() {
-        if (!itemId) return; // Added guard for itemId
+        if (!itemId) return;
         try {
-            const {data, error: rpcError} = await supabase.rpc('get_unique_item_viewers', { // Renamed error variable
-                item_id: itemId, // Use itemId
+            const {data, error: rpcError} = await supabase.rpc('get_unique_item_viewers', {
+                item_id: itemId,
             });
 
-            if (rpcError) throw rpcError; // Use rpcError
+            if (rpcError) throw rpcError;
             setViewerCount(data || 0);
-        } catch (err: any) { // Use err
-            console.error('Error fetching viewer count:', err); // Use err
+        } catch (err: any) {
+            console.error('Error fetching viewer count:', err);
         }
     }
 
     const handleReviewSubmitted = () => {
         setReviewRefreshKey(prevKey => prevKey + 1);
-        // Optionally re-fetch item to update average rating display on this page
-        // This could be a lighter fetch just for the item's rating fields
-        // For now, reviewRefreshKey will make ItemReviewList update.
-        // To update the item's average rating displayed here, we can call fetchItemDetails again.
         if (itemId) {
-            // A slight delay can give time for the DB trigger to update the average
             setTimeout(() => fetchItemDetails(), 1000);
         }
+    };
+
+    const handlePlaceBid = async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!item || !user) return;
+      setIsBidding(true);
+      setBidError(null);
+      setBidSuccess(null);
+      try {
+        const amount = parseFloat(bidAmount);
+        if (isNaN(amount) || amount <= 0) {
+          throw new Error("Invalid bid amount. Must be a positive number.");
+        }
+        // Client-side check for minimum bid amount (though server RPC also validates)
+        const minBid = (item.current_bid_amount ?? item.price) + 0.01;
+        if (amount < minBid) {
+            throw new Error(`Bid amount must be at least $${minBid.toFixed(2)}.`);
+        }
+
+        const { error: rpcError } = await supabase.rpc('place_bid', {
+          p_item_id: item.id,
+          p_bid_amount: amount,
+        });
+        if (rpcError) throw rpcError;
+        setBidSuccess('Bid placed successfully!');
+        setBidAmount('');
+        setBidListRefreshKey(prev => prev + 1);
+        setTimeout(() => fetchItemDetails(), 500); // Shorter delay, or rely on subscription if implemented
+      } catch (err: any) {
+        console.error('Error placing bid:', err);
+        setBidError(err.message || 'Failed to place bid. Please try again.');
+      } finally {
+        setIsBidding(false);
+      }
     };
 
 
@@ -146,11 +246,11 @@ export function ItemDetails() {
             navigate('/auth');
             return;
         }
-        if (!itemId) return; // Added guard for itemId
+        if (!itemId) return;
 
         try {
-            setError(''); // Clear general page error
-            const {error: offerError} = await supabase // Renamed error variable
+            setError('');
+            const {error: offerError} = await supabase
                 .from('offers')
                 .insert({
                     item_id: itemId, // Use itemId
@@ -317,17 +417,61 @@ export function ItemDetails() {
                         <StarRatingDisplay rating={item.average_item_rating} count={item.item_review_count} />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-700">
-                        <span className="text-2xl font-bold text-indigo-600">${item.price.toFixed(2)}</span>
-                        <span className="capitalize">
-                            Condition: {item.condition.replace('_', ' ')}
-                        </span>
-                        {/* Category could be displayed here if fetched and available in Item type */}
-                        {/* <span className="capitalize">Category: {item.category_name || 'N/A'}</span> */}
-                    </div>
+                    {/* Price / Auction Info Display */}
+                    {item.selling_method === 'auction' ? (
+                        <div className="mb-4 p-4 bg-blue-50 rounded-lg shadow">
+                            <h2 className="text-xl font-bold text-blue-700 mb-3 border-b pb-2">Auction Details</h2>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                <div>
+                                    <p className="text-sm text-gray-600">
+                                        {item.current_bid_amount ? 'Current Bid:' : 'Starting Price:'}
+                                    </p>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        ${(item.current_bid_amount ?? item.price).toFixed(2)}
+                                    </p>
+                                </div>
+                                {item.ends_at && item.is_active && (
+                                  <div>
+                                      <p className="text-sm text-gray-600">Time Remaining:</p>
+                                      <CountdownTimer endsAt={item.ends_at} onAuctionEnd={() => setTimeout(() => fetchItemDetails(), 1000)} />
+                                  </div>
+                                )}
+                                <div>
+                                    <p className="text-sm text-gray-600">Number of Bids:</p>
+                                    <p className="text-lg font-semibold text-gray-800">{item.bid_count || 0}</p>
+                                </div>
+                                {item.ends_at && new Date(item.ends_at) <= new Date() && item.is_active && (
+                                    <p className="text-sm text-orange-600 col-span-2 font-medium">
+                                        This auction has ended. Awaiting processing.
+                                    </p>
+                                )}
+                                {!item.is_active && ( // General inactive state for auction
+                                    <p className="text-sm text-gray-700 col-span-2 font-medium">
+                                        This auction has concluded.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        // Existing price display for non-auction items
+                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-700">
+                            <span className="text-2xl font-bold text-indigo-600">${item.price.toFixed(2)}</span>
+                             {/* Moved condition here for non-auction items, for auctions it's less prominent or can be elsewhere */}
+                            <span className="capitalize">
+                                Condition: {item.condition.replace('_', ' ')}
+                            </span>
+                        </div>
+                    )}
+                    {/* End Price / Auction Info Display */}
+
+                    {/* Condition display for auction items can be here or in main description area */}
+                    {item.selling_method === 'auction' && (
+                         <p className="text-sm text-gray-600 capitalize">Condition: {item.condition.replace('_', ' ')}</p>
+                    )}
+
 
                      <UpdateStockStatus
-                        itemId={item.id} // item.id should be correct as item is not null here
+                        itemId={item.id}
                         currentStatus={item.stock_status}
                         isSeller={isOwnItem}
                         onUpdate={(newStatus) => setItem(prevItem => prevItem ? {...prevItem, stock_status: newStatus} : null)}
@@ -356,27 +500,74 @@ export function ItemDetails() {
                                 <StarRatingDisplay
                                     rating={item.seller.rating}
                                     count={item.seller.total_ratings}
-                                    size="text-sm" // Smaller size for seller section
+                                    size="text-sm"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* PriceHistory is already here, ensure it's distinct from seller info block */}
-                    <div className="mt-4 border-t pt-4"> {/* Added margin top and border for separation */}
+                    <div className="mt-4 border-t pt-4">
                         <PriceHistory itemId={item.id} currentPrice={item.price}/>
                     </div>
 
-                    {!isOwnItem ? (
+                    {/* Bidding Form - Conditional */}
+                    {item.selling_method === 'auction' && item.is_active && item.ends_at && new Date(item.ends_at) > new Date() && user && user.id !== item.seller_id && (
+                      <form onSubmit={handlePlaceBid} className="mt-6 p-4 border rounded-lg bg-gray-50 shadow-md">
+                        <h3 className="text-lg font-semibold mb-3 text-gray-800">Place Your Bid</h3>
+                        {bidError && <p className="text-red-600 text-sm mb-2 p-2 bg-red-100 rounded">{bidError}</p>}
+                        {bidSuccess && <p className="text-green-600 text-sm mb-2 p-2 bg-green-100 rounded">{bidSuccess}</p>}
+                        <div className="flex items-stretch space-x-2"> {/* items-stretch for button height */}
+                          <div className="relative flex-grow">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={bidAmount}
+                              onChange={(e) => setBidAmount(e.target.value)}
+                              placeholder={`Min. $${((item.current_bid_amount ?? item.price) + 0.01).toFixed(2)}`}
+                              className="w-full pl-7 pr-2 py-2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              required
+                            />
+                          </div>
+                          <button
+                            type="submit"
+                            className="inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
+                            disabled={isBidding}
+                          >
+                            {isBidding ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Placing...
+                              </>
+                            ) : 'Place Bid'}
+                          </button>
+                        </div>
+                         {bidAmount && parseFloat(bidAmount) < ((item.current_bid_amount ?? item.price) + 0.01) && (
+                            <p className="text-xs text-red-500 mt-1">
+                                Your bid must be at least ${((item.current_bid_amount ?? item.price) + 0.01).toFixed(2)}.
+                            </p>
+                        )}
+                      </form>
+                    )}
+
+
+                    {/* Standard Actions (Buy Now, Make Offer, Contact Seller) */}
+                    {/* These should be hidden or adjusted if it's an auction and the user is not the seller,
+                        or if the auction is active. For now, keeping existing logic but it might need refinement
+                        based on auction status. */}
+                    {!isOwnItem && item.selling_method !== 'auction' && ( // Hide if auction for non-owner
                         <div className="space-y-3 pt-4 border-t">
                             {item.selling_method === 'fixed' ? (
                                 <button
-                                    onClick={handleContactSeller} // Consider renaming to handleBuyNow if it leads to a checkout
+                                    onClick={handleContactSeller}
                                     className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
                                 >
                                     Buy Now
                                 </button>
-                            ) : (
+                            ) : ( // This assumes 'negotiation' if not 'fixed' and not 'auction'
                                 <>
                                     <button
                                         onClick={() => setShowOfferForm(!showOfferForm)}
@@ -460,6 +651,13 @@ export function ItemDetails() {
                     <ItemReviewList itemId={itemId} refreshKey={reviewRefreshKey} />
                 </div>
               </>
+            )}
+
+            {/* Bid History for Auctions */}
+            {item.selling_method === 'auction' && itemId && (
+              <div className="bg-white shadow-xl rounded-lg p-6">
+                <BidList itemId={itemId} refreshKey={bidListRefreshKey} />
+              </div>
             )}
 
             {/* Similar Items */}
