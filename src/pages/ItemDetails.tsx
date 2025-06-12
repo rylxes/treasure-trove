@@ -279,20 +279,22 @@ export function ItemDetails() {
 
                     {!isOwnItem ? (
                         <div className="space-y-4">
-                            {item.selling_method === 'fixed' ? (
+                            {item.selling_method === 'fixed' && (
                                 <button
                                     onClick={handleContactSeller}
                                     className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
                                 >
                                     Buy Now
                                 </button>
-                            ) : (
+                            )}
+                            {item.selling_method !== 'fixed' && ( // Covers 'negotiation' and 'auction' for this button logic
                                 <>
                                     <button
                                         onClick={() => setShowOfferForm(!showOfferForm)}
                                         className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
                                     >
-                                        Make an Offer
+                                        {/* Text changed to be dynamic as per later versions, but the original error was with simpler text */}
+                                        {showOfferForm ? 'Cancel Offer' : 'Make an Offer'}
                                     </button>
                                     {showOfferForm && (
                                         <div className="bg-gray-50 p-4 rounded-lg">
